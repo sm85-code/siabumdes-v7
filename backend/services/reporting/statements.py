@@ -1,5 +1,6 @@
 """Reporting calculations: statements"""
 from services.reporting.context import *
+from services.reporting.accounting_core import _calc_balances, _calc_balances_before, _get_accounts_map, _group_from_unit
 
 async def _laba_rugi(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                      include_closing: bool = True):
@@ -8,6 +9,7 @@ async def _laba_rugi(start_date: str, end_date: str, unit_usaha_id: Optional[str
     include_closing=False → operational only (dipakai Perubahan Ekuitas untuk
     menampilkan laba periode yang bermigrasi ke Saldo Laba).
     """
+    from services.reporting.accounting_core import _get_accounts_map, _group_from_unit
     q: dict = {"date": {"$gte": start_date, "$lte": end_date}, "unit_usaha_id": unit_usaha_id}
     if not include_closing:
         q["is_closing"] = {"$ne": True}
@@ -94,6 +96,7 @@ async def _neraca(as_of_date: str, unit_usaha_id: Optional[str] = None):
 
 async def _arus_kas(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None):
     """Cash flow — detect kas/bank accounts via subcategory='kas_bank' (no hardcoded codes)."""
+    from services.reporting.accounting_core import _get_accounts_map, _group_from_unit
     q = {"date": {"$gte": start_date, "$lte": end_date}, "unit_usaha_id": unit_usaha_id}
     txs = await db.transactions.select(q, None).all(20000)
     grp = await _group_from_unit(unit_usaha_id)
