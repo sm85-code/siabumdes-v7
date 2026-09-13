@@ -9,7 +9,8 @@ from routers.reports import exports
 from routers.reports import pdf
 
 router = APIRouter(prefix=API_PREFIX)
-router.include_router(public_dashboard.router, dependencies=[Depends(require_password_ready)])
+# Public dashboard endpoints are intentionally accessible without password-change gating.
+router.include_router(public_dashboard.router)
 router.include_router(periods.router, dependencies=[Depends(require_password_ready)])
 router.include_router(financial.router, dependencies=[Depends(require_password_ready)])
 router.include_router(exports.router, dependencies=[Depends(require_password_ready)])
