@@ -41,7 +41,16 @@ async def validate_csrf_origin(request: Request, call_next):
         source = origin or (referer and "/".join(referer.split("/")[:3]))
         if source and source not in CORS_ORIGINS:
             return JSONResponse(status_code=403, content={"detail": "Permintaan lintas situs ditolak"})
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception:
+        logger.exception("unhandled method=%s path=%s", request.method, request.url.path)
+        response = JSONResponse(status_code=500, content={"detail": "Terjadi kesalahan internal pada server"})
+        origin = request.headers.get("origin")
+        if origin in CORS_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Vary"] = "Origin"
     if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
         logger.info("mutation method=%s path=%s status=%s", request.method, request.url.path, response.status_code)
     return response
