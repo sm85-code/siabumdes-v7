@@ -21,7 +21,7 @@ def _required_env(name: str) -> str:
     return value
 
 
-CORS_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
+CORS_ORIGINS = [origin.strip().rstrip("/") for origin in os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",") if origin.strip()]
 
 DATABASE_URL = _required_env("DATABASE_URL")
 JWT_SECRET = _required_env("JWT_SECRET")
