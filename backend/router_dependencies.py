@@ -74,6 +74,33 @@ from config import API_PREFIX, APP_TITLE, READ_LEVEL, REPORT_READ_LEVEL, WRITE_L
 from dependencies import fmt_rp, user_from_payload, scope_unit_for_pengelola, require_not_readonly, require_password_ready
 from startup import seed_startup as seed_database
 
+
+async def _check_period_not_blocked(dep: dict, date_value: str) -> None:
+    """Reject writes to a period closed for the transaction's group."""
+    if not date_value or len(date_value) < 7:
+        return
+    period = date_value[:7]
+    unit_id = dep.get("unit")
+    group = "BUMDES"
+    if unit_id:
+        unit = await db.unit_usaha.select_one({"id": unit_id}, {"_id": 0, "code": 1})
+        group = unit.get("code") if unit else "BUMDES"
+    if await db.closed_periods.select_one({"period": period, "group": group}, {"_id": 0}):
+        raise HTTPException(status_code=409, detail=f"Periode {period} ({group}) sudah ditutup")
+
+
+async def _check_period_not_closed(unit_id: Optional[str], date_value: str) -> None:
+    """Reject writes to a period closed for the target unit or BUMDES."""
+    if not date_value or len(date_value) < 7:
+        return
+    period = date_value[:7]
+    group = "BUMDES"
+    if unit_id:
+        unit = await db.unit_usaha.select_one({"id": unit_id}, {"_id": 0, "code": 1})
+        group = unit.get("code") if unit else "BUMDES"
+    if await db.closed_periods.select_one({"period": period, "group": group}, {"_id": 0}):
+        raise HTTPException(status_code=409, detail=f"Periode {period} ({group}) sudah ditutup")
+
 app = FastAPI(title=APP_TITLE)
 
 router = APIRouter(prefix=API_PREFIX)
