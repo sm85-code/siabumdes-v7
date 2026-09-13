@@ -101,12 +101,12 @@ from router_dependencies import (
 
 router = APIRouter()
 
-router.get("/admin/gdrive/status")
+@router.get("/admin/gdrive/status")
 async def gdrive_status(_: dict = Depends(require_roles("admin"))):
     tok = await db.oauth_tokens.select_one({"provider": "gdrive"}, {"_id": 0, "refresh_token": 0})
     return {"connected": bool(tok), "email": (tok or {}).get("email"), "connected_at": (tok or {}).get("connected_at")}
 
-router.get("/admin/gdrive/connect")
+@router.get("/admin/gdrive/connect")
 async def gdrive_connect(request: Request, _: dict = Depends(require_roles("admin"))):
     """Return URL untuk memulai OAuth flow dengan redirect URI terkonfigurasi."""
     from services import gdrive_service
@@ -126,7 +126,7 @@ async def gdrive_connect(request: Request, _: dict = Depends(require_roles("admi
     )
     return {"auth_url": gdrive_service.auth_url(state, redirect_uri), "redirect_uri": redirect_uri}
 
-router.get("/gdrive/oauth-callback")
+@router.get("/gdrive/oauth-callback")
 async def gdrive_callback(code: str, state: str):
     """Callback dari Google. Tukar code → refresh_token dan simpan.
     redirect_uri diambil dari state yang sama untuk memastikan cocok dengan yang

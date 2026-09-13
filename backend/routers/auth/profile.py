@@ -101,7 +101,7 @@ from router_dependencies import (
 
 router = APIRouter()
 
-router.put("/auth/profile", response_model=UserOut)
+@router.put("/auth/profile", response_model=UserOut)
 async def update_profile(payload: ProfileUpdateRequest, current: dict = Depends(get_current_user_payload)):
     user = await user_from_payload(current)
     duplicate = await db.users.select_one({
@@ -117,7 +117,7 @@ async def update_profile(payload: ProfileUpdateRequest, current: dict = Depends(
     updated = await db.users.select_one({"id": user.id}, {"_id": 0, "password_hash": 0})
     return UserOut(**updated)
 
-router.post("/auth/change-password")
+@router.post("/auth/change-password")
 async def change_password(payload: ChangePasswordRequest, current: dict = Depends(get_current_user_payload)):
     if len(payload.new_password) < 8:
         raise HTTPException(status_code=400, detail="Password baru minimal 8 karakter")
