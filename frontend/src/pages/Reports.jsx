@@ -167,50 +167,44 @@ export default function Reports() {
       </div>
 
       {tab === "laporan" && (
-        <div className="tab-strip">
-          {visibleReports.map(r => {
-            const Icon = r.icon;
-            const isActive = active === r.key;
-            return (
-              <button key={r.key} data-testid={`rpt-tab-${r.key}`}
-                      onClick={() => { setActive(r.key); setData(null); }}
-                      className={`btn ${isActive ? "btn-secondary" : "btn-outline"} whitespace-nowrap`}>
-                <Icon size={16} weight={isActive ? "fill" : "regular"} /> {r.label}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        <>
+          <div className="card">
+            <label className="label" htmlFor="report-group-select">Kelompok</label>
+            <select id="report-group-select" data-testid="report-group-select" className="select" value={groupKey}
+                    disabled={isPengelola}
+                    onChange={(e) => { setGroupKey(e.target.value); setData(null); }}>
+              {groupOptions.map(o => <option key={o.code} value={o.code}>{o.code === "BUMDES" ? "BUMDES - Pusat" : `${o.code} - ${o.name}`}</option>)}
+            </select>
+          </div>
 
-      <div className="card">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-          {tab === "laporan" && (
-            <div>
-              <label className="label" htmlFor="report-group-select">Kelompok</label>
-              <select id="report-group-select" data-testid="report-group-select" className="select" value={groupKey}
-                      disabled={isPengelola}
-                      onChange={(e) => { setGroupKey(e.target.value); setData(null); }}>
-                {groupOptions.map(o => <option key={o.code} value={o.code}>{o.code === "BUMDES" ? "BUMDES - Pusat" : `${o.code} - ${o.name}`}</option>)}
-              </select>
+          <div className="card">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+              <div>
+                <label className="label" htmlFor="report-type-select">Jenis Laporan Keuangan</label>
+                <select id="report-type-select" data-testid="report-type-select" className="select" value={active}
+                        onChange={(e) => { setActive(e.target.value); setData(null); }}>
+                  {visibleReports.map(r => <option key={r.key} value={r.key}>{r.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="report-month">Bulan</label>
+                <select id="report-month" data-testid="report-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setData(null); setKinerja(null); }}>
+                  {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="report-year">Tahun</label>
+                <select id="report-year" data-testid="report-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setData(null); setKinerja(null); }}>
+                  {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <button data-testid="btn-load-report" onClick={load} className="btn btn-primary">
+                {loading ? "Memuat..." : "Tampilkan Laporan"}
+              </button>
             </div>
-          )}
-          <div>
-            <label className="label" htmlFor="report-month">Bulan</label>
-            <select id="report-month" data-testid="report-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setData(null); setKinerja(null); }}>
-              {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-            </select>
           </div>
-          <div>
-            <label className="label" htmlFor="report-year">Tahun</label>
-            <select id="report-year" data-testid="report-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setData(null); setKinerja(null); }}>
-              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-            </select>
-          </div>
-          <button data-testid="btn-load-report" onClick={load} className="btn btn-primary">
-            {loading ? "Memuat..." : "Tampilkan Laporan"}
-          </button>
-        </div>
-      </div>
+        </>
+      )}
 
       {tab === "kinerja" && kinerja && (
         <>
