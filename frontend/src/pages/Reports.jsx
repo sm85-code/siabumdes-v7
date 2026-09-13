@@ -144,7 +144,7 @@ export default function Reports() {
   return (
     <div className="space-y-6" data-testid="reports-page">
       <div>
-        <p className="label mb-1">Kepmendesa 136/2022</p>
+        <p className="label mb-1">FINANCIAL STATEMENTS</p>
         <h1 className="font-heading text-3xl font-bold page-h1">Laporan Keuangan</h1>
         <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
           {isPengelola
