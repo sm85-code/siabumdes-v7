@@ -7,6 +7,7 @@ from time import monotonic
 import logging
 from config import API_PREFIX, APP_TITLE, CORS_ORIGINS
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("bumdes.audit")
 from database import close_database, engine, init_database
 from sqlalchemy import text
@@ -88,6 +89,9 @@ async def health():
     try:
         async with engine.connect() as connection:
             await connection.execute(text("SELECT 1"))
-    except Exception:
-        return JSONResponse(status_code=503, content={"status": "degraded", "database": "unavailable"})
-    return {"status": "ok", "database": "connected"}
+            migration = await connection.scalar(text("SELECT version_num FROM alembic_version ORDER BY version_num DESC LIMIT 1"))
+            entity_count = await connection.scalar(text("SELECT COUNT(*) FROM application_entities"))
+    except Exception as exc:
+        logger.exception("database health check failed")
+        return JSONResponse(status_code=503, content={"status": "degraded", "database": "unavailable", "error_type": type(exc).__name__})
+    return {"status": "ok", "database": "connected", "migration": migration, "entities": int(entity_count or 0)}
