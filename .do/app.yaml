@@ -1,5 +1,17 @@
 name: bumdes-karya-raharja
 region: sgp
+ingress:
+  rules:
+    - component:
+        name: backend
+      match:
+        path:
+          prefix: /api
+    - component:
+        name: frontend
+      match:
+        path:
+          prefix: /
 services:
   - name: backend
     source_dir: /backend
@@ -12,6 +24,9 @@ services:
     instance_size_slug: basic-xxs
     http_port: 8000
     run_command: uvicorn server:app --host 0.0.0.0 --port ${PORT}
+    routes:
+      - path: /api
+        preserve_path_prefix: true
     health_check:
       http_path: /health
       initial_delay_seconds: 10
