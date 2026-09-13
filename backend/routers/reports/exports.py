@@ -185,37 +185,14 @@ async def export_report_excel(
     elif report_type == "perubahan-ekuitas":
         data = await _perubahan_ekuitas(start_date, end_date, unit_usaha_id)
         hdr("Laporan Perubahan Ekuitas", f"Periode: {start_date} s.d. {end_date}")
-        ws.append(["Uraian", "Jumlah (Rp)"])
+        ws.append(["No.", "Uraian", "Jumlah (Rp)"])
         for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
-        # ==== 10-baris struktur baru: PENYERTAAN MODAL + SALDO LABA ====
-        ws.append(["PENYERTAAN MODAL", ""])
-        for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
-        rows_penyertaan = [
-            ("  Penyertaan modal awal", data["penyertaan_modal_awal"]),
-            ("    - Modal Desa", data["modal_desa_awal"]),
-            ("    - Modal Masyarakat", data["modal_masyarakat_awal"]),
-            ("  Penambahan modal periode berjalan", data["tambah_desa"] + data["tambah_masyarakat"]),
-            ("    - Tambahan Modal Desa", data["tambah_desa"]),
-            ("    - Tambahan Modal Masyarakat", data["tambah_masyarakat"]),
-        ]
-        for label, val in rows_penyertaan:
-            ws.append([label, val])
-        ws.append(["  Penyertaan modal AKHIR", data["penyertaan_modal_akhir"]])
-        for c in ws[ws.max_row]: c.font = bold
-        ws.append(["SALDO LABA", ""])
-        for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
-        rows_saldo = [
-            ("  Saldo laba awal", data["saldo_laba_awal"]),
-            ("  Laba/(rugi) periode berjalan", data["laba_periode"]),
-            ("  Bagi hasil Desa", -data.get("bagi_hasil_desa", 0)),
-            ("  Bagi hasil Masyarakat", -data.get("bagi_hasil_masyarakat", 0)),
-        ]
-        for label, val in rows_saldo:
-            ws.append([label, val])
-        ws.append(["  Saldo laba AKHIR", data["saldo_laba_akhir"]])
-        for c in ws[ws.max_row]: c.font = bold
-        ws.append(["EKUITAS AKHIR", data["ekuitas_akhir"]])
-        for c in ws[ws.max_row]: c.font = bold; c.fill = total_fill
+        for item in data.get("rows", []):
+            ws.append([item["no"], item["label"], "" if item.get("amount") is None else item["amount"]])
+            if item.get("kind") == "section":
+                for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
+            elif item.get("bold"):
+                for c in ws[ws.max_row]: c.font = bold; c.fill = total_fill
     elif report_type == "per-unit":
         data = await _per_unit_report(start_date, end_date)
         b = data.get("bumdes") or {}

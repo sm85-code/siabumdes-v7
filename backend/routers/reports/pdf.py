@@ -215,39 +215,23 @@ async def pdf_pe(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
     def build():
         story = []
         _pdf_header(story, _STYLES, "LAPORAN PERUBAHAN EKUITAS", f"Periode: {start_date} s.d. {end_date}")
-        rows = [
-            [P("Uraian", _CELL_BOLD), P("Jumlah", _CELL_BOLD_RIGHT)],
-            # Section: Penyertaan Modal
-            [P("PENYERTAAN MODAL", _CELL_BOLD), P("", _CELL_BOLD_RIGHT)],
-            [P("  Penyertaan modal awal"), P(fmt_rp(data["penyertaan_modal_awal"]), _CELL_RIGHT)],
-            [P("    - Modal Desa"), P(fmt_rp(data["modal_desa_awal"]), _CELL_RIGHT)],
-            [P("    - Modal Masyarakat"), P(fmt_rp(data["modal_masyarakat_awal"]), _CELL_RIGHT)],
-            [P("  Penambahan modal periode berjalan"),
-             P(fmt_rp(data["tambah_desa"] + data["tambah_masyarakat"]), _CELL_RIGHT)],
-            [P("    - Tambahan Modal Desa"), P(fmt_rp(data["tambah_desa"]), _CELL_RIGHT)],
-            [P("    - Tambahan Modal Masyarakat"), P(fmt_rp(data["tambah_masyarakat"]), _CELL_RIGHT)],
-            [P("  Penyertaan modal AKHIR", _CELL_BOLD),
-             P(fmt_rp(data["penyertaan_modal_akhir"]), _CELL_BOLD_RIGHT)],
-            # Section: Saldo Laba
-            [P("SALDO LABA", _CELL_BOLD), P("", _CELL_BOLD_RIGHT)],
-            [P("  Saldo laba awal"), P(fmt_rp(data["saldo_laba_awal"]), _CELL_RIGHT)],
-            [P("  Laba/(rugi) periode berjalan"), P(fmt_rp(data["laba_periode"]), _CELL_RIGHT)],
-            [P("  Bagi hasil Desa"), P(f"({fmt_rp(data.get('bagi_hasil_desa', 0))})", _CELL_RIGHT)],
-            [P("  Bagi hasil Masyarakat"), P(f"({fmt_rp(data.get('bagi_hasil_masyarakat', 0))})", _CELL_RIGHT)],
-            [P("  Saldo laba AKHIR", _CELL_BOLD), P(fmt_rp(data["saldo_laba_akhir"]), _CELL_BOLD_RIGHT)],
-            # Grand total
-            [P("EKUITAS AKHIR", _CELL_BOLD), P(fmt_rp(data["ekuitas_akhir"]), _CELL_BOLD_RIGHT)],
-        ]
-        t = Table(rows, colWidths=[11 * cm, 6.5 * cm], repeatRows=1)
+        rows = [[P("No.", _CELL_BOLD), P("Uraian", _CELL_BOLD), P("Jumlah (Rp)", _CELL_BOLD_RIGHT)]]
+        section_rows = []
+        total_rows = []
+        for item in data.get("rows", []):
+            amount = "" if item.get("amount") is None else fmt_rp(item["amount"])
+            label = ("  " * item.get("indent", 0)) + item["label"]
+            rows.append([P(str(item["no"]), _CELL_BOLD if item.get("bold") else None),
+                         P(label, _CELL_BOLD if item.get("bold") or item.get("kind") == "section" else None),
+                         P(amount, _CELL_BOLD_RIGHT if item.get("bold") else _CELL_RIGHT)])
+            if item.get("kind") == "section": section_rows.append(len(rows) - 1)
+            if item.get("bold"): total_rows.append(len(rows) - 1)
+        t = Table(rows, colWidths=[1.1 * cm, 10.4 * cm, 6 * cm], repeatRows=1)
         ts = _table_style()
-        # Header bg for section titles
-        ts.add("BACKGROUND", (0, 1), (-1, 1), colors.HexColor("#EEF3F9"))
-        ts.add("BACKGROUND", (0, 9), (-1, 9), colors.HexColor("#EEF3F9"))
-        # Subtotal bold rows
-        ts.add("BACKGROUND", (0, 8), (-1, 8), colors.HexColor("#EEF3F9"))
-        ts.add("BACKGROUND", (0, 14), (-1, 14), colors.HexColor("#EEF3F9"))
-        # Grand total
-        ts.add("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#DCE8FE"))
+        for row_index in section_rows:
+            ts.add("BACKGROUND", (0, row_index), (-1, row_index), colors.HexColor("#EEF3F9"))
+        for row_index in total_rows:
+            ts.add("BACKGROUND", (0, row_index), (-1, row_index), colors.HexColor("#DCE8FE"))
         t.setStyle(ts)
         story.append(t)
         story.extend(sig)
