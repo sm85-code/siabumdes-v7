@@ -67,6 +67,7 @@ from router_dependencies import (
     _pdf_response,
     _per_unit_report,
     _perubahan_ekuitas,
+    _pdf_header,
     _section_row,
     _signature_block,
     _sig_flow,

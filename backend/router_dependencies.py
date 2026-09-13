@@ -55,7 +55,14 @@ from services.jwt_service import (
     hash_password, verify_password, create_access_token,
     get_current_user_payload, require_roles, COOKIE_NAME, ACCESS_TOKEN_EXPIRE_HOURS,
 )
-from seed_data import CHART_OF_ACCOUNTS, UNIT_USAHA_SEED, VALID_CATEGORIES, VALID_ACCOUNT_CATEGORIES
+from seed_data import (
+    CHART_OF_ACCOUNTS,
+    EXAMPLE_ROWS_BUMDES,
+    EXAMPLE_ROWS_UNIT,
+    UNIT_USAHA_SEED,
+    VALID_CATEGORIES,
+    VALID_ACCOUNT_CATEGORIES,
+)
 
 # Kept as compatibility symbols for modular routers; database access is PostgreSQL-backed.
 DatabaseClient = Any

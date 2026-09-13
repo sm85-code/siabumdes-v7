@@ -67,6 +67,7 @@ from router_dependencies import (
     _pdf_response,
     _per_unit_report,
     _perubahan_ekuitas,
+    _pdf_header,
     _section_row,
     _signature_block,
     _sig_flow,
@@ -323,7 +324,32 @@ async def pdf_per_unit(start_date: str, end_date: str, _: dict = Depends(get_cur
 
 @router.get("/reports/calk/pdf")
 async def pdf_calk(start_date: str, end_date: str, _: dict = Depends(require_roles(*READ_LEVEL))):
-    data = await rpt_calk(start_date, end_date)
+    lr = await _laba_rugi(start_date, end_date)
+    nr = await _neraca(end_date)
+    ak = await _arus_kas(start_date, end_date)
+    data = {
+        "informasi_umum": {
+            "nama": "BUMDES Karya Raharja",
+            "alamat": "Desa Wonoharjo, Kec. Pangandaran",
+            "direktur": "Budianto",
+            "dasar_hukum": "Kepmendesa PDTT No. 136 Tahun 2022",
+        },
+        "ringkasan_kinerja": {
+            "total_pendapatan": lr["total_pendapatan"],
+            "total_beban": lr["total_beban"],
+            "laba_bersih": lr["laba_bersih"],
+            "total_aset": nr["total_aset"],
+            "total_kewajiban": nr["total_kewajiban"],
+            "total_ekuitas": nr["total_ekuitas"],
+            "arus_kas_bersih": ak["arus_kas_bersih"],
+        },
+        "kebijakan_akuntansi": [
+            "Laporan disusun sesuai Kepmendesa PDTT No. 136 Tahun 2022.",
+            "Pengakuan pendapatan menggunakan basis akrual.",
+            "Bagi hasil pengelola sebesar 30% dari laba bersih unit usaha.",
+            "Bagi hasil BUMDES sebesar 70% dari laba bersih unit usaha.",
+        ],
+    }
     sig = _signature_block()
     def build():
         story = []
