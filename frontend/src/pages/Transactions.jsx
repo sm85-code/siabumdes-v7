@@ -290,10 +290,17 @@ export default function Transactions() {
     return true;
   };
 
-  // Build tabs
+  // Fixed group order keeps the selector consistent with the UU01–UU06 business units.
   const groupTabs = useMemo(() => {
-    const tabs = [{ key: "BUMDES", label: "BUMDES" }];
-    units.forEach(u => tabs.push({ key: u.code, label: `${u.code} · ${u.name}` }));
+    const tabs = [
+      { key: "BUMDES", label: "BUMDES - Pusat" },
+      ...["UU01", "UU02", "UU03", "UU04", "UU05", "UU06"]
+        .map(code => {
+          const unit = units.find(u => u.code === code);
+          return unit ? { key: code, label: `${code} - ${unit.name}` } : null;
+        })
+        .filter(Boolean),
+    ];
     return isPengelola
       ? tabs.filter(t => t.key === units.find(u => u.id === user?.unit_usaha_id)?.code)
       : tabs;
@@ -527,18 +534,21 @@ if (!(await confirm({
         </div>
       )}
 
-      {/* Tab Selector: BUMDES + UU01..UU06 */}
+      {/* Group selector: BUMDES + UU01..UU06 */}
       <div className="card card-sm" data-testid="tx-group-tabs">
-        <label className="label mb-2">Kelompok</label>
-        <div className="tab-strip">
+        <label className="label mb-2" htmlFor="tx-group-select">Kelompok</label>
+        <select
+          id="tx-group-select"
+          data-testid="tx-group-select"
+          className="select"
+          value={activeGroup}
+          onChange={(e) => setActiveGroup(e.target.value)}
+          disabled={isPengelola}
+        >
           {groupTabs.map(g => (
-            <button key={g.key} data-testid={`tx-tab-${g.key}`}
-                    onClick={() => setActiveGroup(g.key)}
-                    className={`btn text-sm ${activeGroup === g.key ? "btn-primary" : "btn-outline"}`}>
-              {g.label}
-            </button>
+            <option key={g.key} value={g.key}>{g.label}</option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Month/Year filter */}
