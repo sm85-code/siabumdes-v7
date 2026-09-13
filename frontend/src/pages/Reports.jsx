@@ -5,8 +5,17 @@ import { notify } from "@/lib/feedback";
 import { useConfirm } from "@/components/ConfirmProvider";
 import { FilePdf, FileXls, ChartLine, Scales, Coins, TrendUp, BookOpen, ChartBar, Lock } from "@phosphor-icons/react";
 
-const today = new Date().toISOString().slice(0, 10);
-const startOfYear = today.slice(0, 4) + "-01-01";
+const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const YEAR_MIN = 2022, YEAR_MAX = 2030;
+const YEARS = Array.from({ length: YEAR_MAX - YEAR_MIN + 1 }, (_, i) => YEAR_MIN + i);
+const pad = (n) => String(n).padStart(2, "0");
+const today = new Date();
+const currentYear = today.getFullYear();
+const currentMonth = today.getMonth() + 1;
+const monthRange = (year, month) => {
+  const lastDay = new Date(year, month, 0).getDate();
+  return { start: `${year}-${pad(month)}-01`, end: `${year}-${pad(month)}-${pad(lastDay)}` };
+};
 
 // Sub-tabs report: keys sama untuk BUMDES dan Unit — backend pakai unit_usaha_id untuk scoping.
 const REPORTS = [
@@ -23,8 +32,9 @@ export default function Reports() {
   const isPengelola = user?.role === "pengelola";
   const isAdmin = user?.role === "admin";
 
-  const [start, setStart] = useState(startOfYear);
-  const [end, setEnd] = useState(today);
+  const [year, setYear] = useState(currentYear);
+  const [month, setMonth] = useState(currentMonth);
+  const { start, end } = monthRange(year, month);
   // tab: laporan | kinerja
   const [tab, setTab] = useState("laporan");
   const [active, setActive] = useState("neraca");
@@ -67,8 +77,11 @@ export default function Reports() {
 
   const cfg = REPORTS.find(r => r.key === active) || REPORTS[0];
   const groupOptions = useMemo(() => {
-    const list = [{ code: "BUMDES", name: "BUMDES (Agregat)", id: null }];
-    units.forEach(u => list.push({ code: u.code, name: u.name, id: u.id }));
+    const list = [{ code: "BUMDES", name: "Pusat", id: null }];
+    ["UU01", "UU02", "UU03", "UU04", "UU05", "UU06"].forEach(code => {
+      const u = units.find(unit => unit.code === code);
+      if (u) list.push({ code: u.code, name: u.name, id: u.id });
+    });
     return isPengelola
       ? list.filter(o => o.code === units.find(u => u.id === user?.unit_usaha_id)?.code)
       : list;
@@ -164,27 +177,28 @@ export default function Reports() {
 
       <div className="card">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
-          {(tab === "kinerja" || (cfg && cfg.needsRange)) ? (
-            <>
-              <div><label className="label">Tanggal Mulai</label>
-                <input data-testid="start-date" type="date" className="input" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-              <div><label className="label">Tanggal Akhir</label>
-                <input data-testid="end-date" type="date" className="input" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
-            </>
-          ) : (
-            <div className="sm:col-span-2"><label className="label">Per Tanggal</label>
-              <input data-testid="as-of-date" type="date" className="input" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
-          )}
           {tab === "laporan" && (
             <div>
-              <label className="label">Kelompok</label>
-              <select data-testid="report-group-select" className="select" value={groupKey}
+              <label className="label" htmlFor="report-group-select">Kelompok</label>
+              <select id="report-group-select" data-testid="report-group-select" className="select" value={groupKey}
                       disabled={isPengelola}
                       onChange={(e) => { setGroupKey(e.target.value); setData(null); }}>
-                {groupOptions.map(o => <option key={o.code} value={o.code}>{o.code} — {o.name}</option>)}
+                {groupOptions.map(o => <option key={o.code} value={o.code}>{o.code === "BUMDES" ? "BUMDES - Pusat" : `${o.code} - ${o.name}`}</option>)}
               </select>
             </div>
           )}
+          <div>
+            <label className="label" htmlFor="report-month">Bulan</label>
+            <select id="report-month" data-testid="report-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setData(null); setKinerja(null); }}>
+              {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="report-year">Tahun</label>
+            <select id="report-year" data-testid="report-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setData(null); setKinerja(null); }}>
+              {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
           <button data-testid="btn-load-report" onClick={load} className="btn btn-primary">
             {loading ? "Memuat..." : "Tampilkan Laporan"}
           </button>

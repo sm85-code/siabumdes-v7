@@ -534,36 +534,26 @@ if (!(await confirm({
         </div>
       )}
 
-      {/* Group selector: BUMDES + UU01..UU06 */}
-      <div className="card card-sm" data-testid="tx-group-tabs">
-        <label className="label mb-2" htmlFor="tx-group-select">Kelompok</label>
-        <select
-          id="tx-group-select"
-          data-testid="tx-group-select"
-          className="select"
-          value={activeGroup}
-          onChange={(e) => setActiveGroup(e.target.value)}
-          disabled={isPengelola}
-        >
-          {groupTabs.map(g => (
-            <option key={g.key} value={g.key}>{g.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* Month/Year filter */}
-      <div className="card card-sm">
+      {/* Unified group and monthly period filters */}
+      <div className="card" data-testid="tx-filters">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
           <div>
-            <label className="label">Bulan</label>
-            <select data-testid="tx-month" className="select"
+            <label className="label" htmlFor="tx-group-select">Kelompok</label>
+            <select id="tx-group-select" data-testid="tx-group-select" className="select"
+                    value={activeGroup} onChange={(e) => setActiveGroup(e.target.value)} disabled={isPengelola}>
+              {groupTabs.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="label" htmlFor="tx-month">Bulan</label>
+            <select id="tx-month" data-testid="tx-month" className="select"
                     value={month} onChange={(e) => setMonth(Number(e.target.value))}>
               {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
             </select>
           </div>
           <div>
-            <label className="label">Tahun</label>
-            <select data-testid="tx-year" className="select"
+            <label className="label" htmlFor="tx-year">Tahun</label>
+            <select id="tx-year" data-testid="tx-year" className="select"
                     value={year} onChange={(e) => setYear(Number(e.target.value))}>
               {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
@@ -574,7 +564,7 @@ if (!(await confirm({
           </div>
           {canBulkDelete && selected.size > 0 && (
             <button data-testid="btn-bulk-delete" onClick={bulkDelete}
-                    className="btn text-xs"
+                    className="btn text-xs sm:col-span-4 justify-self-start"
                     style={{ background: "#D97878", color: "white" }}>
               <Trash size={14} /> Hapus {selected.size} Terpilih
             </button>

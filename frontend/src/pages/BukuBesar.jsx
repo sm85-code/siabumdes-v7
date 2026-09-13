@@ -4,7 +4,10 @@ import { useAuth } from "@/lib/auth";
 import { notify } from "@/lib/feedback";
 import { Books, MagnifyingGlass, FilePdf, FileXls } from "@phosphor-icons/react";
 
+const MONTHS = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
 const YEAR_MIN = 2022, YEAR_MAX = 2030;
+const YEARS = Array.from({ length: YEAR_MAX - YEAR_MIN + 1 }, (_, i) => YEAR_MIN + i);
+const pad = (n) => String(n).padStart(2, "0");
 
 export default function BukuBesar() {
   const { user } = useAuth();
@@ -15,8 +18,11 @@ export default function BukuBesar() {
   const [group, setGroup] = useState("BUMDES"); // active tab
   const [selected, setSelected] = useState("");
   const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState(`${new Date().getFullYear()}-01-01`);
-  const [endDate, setEndDate] = useState(new Date().toISOString().slice(0, 10));
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const startDate = `${year}-${pad(month)}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const endDate = `${year}-${pad(month)}-${pad(lastDay)}`;
   const [ledger, setLedger] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -84,8 +90,11 @@ export default function BukuBesar() {
   }, [groupAccounts, search]);
 
   const groupTabs = useMemo(() => {
-    const tabs = [{ key: "BUMDES", label: "BUMDES" }];
-    units.forEach(u => tabs.push({ key: u.code, label: `${u.code} · ${u.name}` }));
+    const tabs = [{ key: "BUMDES", label: "BUMDES - Pusat" }];
+    ["UU01", "UU02", "UU03", "UU04", "UU05", "UU06"].forEach(code => {
+      const u = units.find(unit => unit.code === code);
+      if (u) tabs.push({ key: u.code, label: `${u.code} - ${u.name}` });
+    });
     return isPengelola
       ? tabs.filter(t => t.key !== "BUMDES" && t.key === units.find(u => u.id === user?.unit_usaha_id)?.code)
       : tabs;
@@ -103,39 +112,34 @@ export default function BukuBesar() {
         </p>
       </div>
 
-      {/* Group tabs (BUMDES + 6 units) */}
-      <div className="card card-sm" data-testid="ledger-group-tabs">
-        <label className="label mb-2">Kelompok</label>
-        <div className="flex flex-wrap gap-2">
-          {groupTabs.map(g => (
-            <button key={g.key} data-testid={`ledger-tab-${g.key}`}
-                    onClick={() => setGroup(g.key)}
-                    className={`btn text-sm ${group === g.key ? "btn-primary" : "btn-outline"}`}>
-              {g.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="card grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+      <div className="card grid grid-cols-1 sm:grid-cols-3 gap-4 items-end" data-testid="ledger-filters">
         <div>
-          <label className="label">Tanggal Awal</label>
-          <input data-testid="ledger-start" type="date" className="input"
-                 min={`${YEAR_MIN}-01-01`} max={`${YEAR_MAX}-12-31`}
-                 value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+          <label className="label" htmlFor="ledger-group-select">Kelompok</label>
+          <select id="ledger-group-select" data-testid="ledger-group-select" className="select"
+                  value={group} disabled={isPengelola} onChange={(e) => setGroup(e.target.value)}>
+            {groupTabs.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
+          </select>
         </div>
         <div>
-          <label className="label">Tanggal Akhir</label>
-          <input data-testid="ledger-end" type="date" className="input"
-                 min={`${YEAR_MIN}-01-01`} max={`${YEAR_MAX}-12-31`}
-                 value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+          <label className="label" htmlFor="ledger-month">Bulan</label>
+          <select id="ledger-month" data-testid="ledger-month" className="select" value={month}
+                  onChange={(e) => { setMonth(Number(e.target.value)); setSelected(""); setLedger(null); }}>
+            {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+          </select>
         </div>
         <div>
-          <label className="label">Cari Akun</label>
+          <label className="label" htmlFor="ledger-year">Tahun</label>
+          <select id="ledger-year" data-testid="ledger-year" className="select" value={year}
+                  onChange={(e) => { setYear(Number(e.target.value)); setSelected(""); setLedger(null); }}>
+            {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+        <div className="sm:col-span-3">
+          <label className="label" htmlFor="ledger-search">Cari Akun</label>
           <div className="relative">
-            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2" color="#8E88A5" />
-            <input data-testid="ledger-search" className="input pl-9"
-                   placeholder="kode atau nama akun..."
+            <MagnifyingGlass size={16} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" color="#8E88A5" />
+            <input id="ledger-search" data-testid="ledger-search" className="input pl-10"
+                   placeholder="Cari berdasarkan kode atau nama akun"
                    value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
