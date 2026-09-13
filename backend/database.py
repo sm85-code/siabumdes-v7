@@ -121,6 +121,9 @@ def _filter_condition(criteria: dict[str, Any]):
         if key in {"all_of", "$and"}:
             conditions.append(and_(*(_filter_condition(branch) for branch in expected))); continue
         column = _json_value(key)
+        if expected is None:
+            conditions.append(StoredEntity.payload[key].is_(None))
+            continue
         if isinstance(expected, dict):
             for raw_op, value in expected.items():
                 op = {"$exists": "exists", "$in": "in", "$nin": "not_in", "$ne": "not_equal", "$gte": "at_least", "$gt": "above", "$lte": "at_most", "$lt": "below"}.get(raw_op, raw_op)
