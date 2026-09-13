@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from collections import defaultdict, deque
 from time import monotonic
 import logging
-from config import APP_TITLE, CORS_ORIGINS
+from config import API_PREFIX, APP_TITLE, CORS_ORIGINS
 
 logger = logging.getLogger("bumdes.audit")
 from database import close_database, engine, init_database
@@ -58,9 +58,15 @@ async def shutdown_db_client():
     await close_database()
 
 
-from routers import auth_admin, master_data_router, transactions_router, reports_router  # noqa: E402
+from routers import master_data_router, transactions_router, reports_router  # noqa: E402
+from routers.auth import admin_users, gdrive, profile, session  # noqa: E402
 
-for router_module in (auth_admin, master_data_router, transactions_router, reports_router):
+# Register authentication routes directly so the deployed app cannot omit the
+# nested auth routers when importing the compatibility aggregator.
+for auth_module in (session, profile, admin_users, gdrive):
+    app.include_router(auth_module.router, prefix=API_PREFIX)
+
+for router_module in (master_data_router, transactions_router, reports_router):
     app.include_router(router_module.router)
 
 @app.get("/")
