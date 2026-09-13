@@ -46,7 +46,7 @@ export default function Layout({ children }) {
       {/* Sidebar */}
       <aside
         data-testid="sidebar"
-        className={`fixed lg:sticky top-0 left-0 h-screen w-72 z-30 transform transition-transform lg:transform-none ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+        className={`fixed lg:sticky top-0 left-0 h-[100dvh] w-72 z-50 flex flex-col overflow-hidden transform transition-transform lg:transform-none ${open ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
         style={{ background: "white", borderRight: "1px solid var(--border)" }}
       >
         <div className="p-6 flex items-center gap-3" style={{ borderBottom: "1px solid var(--border)" }}>
@@ -59,7 +59,7 @@ export default function Layout({ children }) {
           </div>
         </div>
 
-        <nav className="p-3 space-y-1 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
+        <nav className="flex-1 min-h-0 p-3 space-y-1 overflow-y-auto">
           {visible.map((n) => {
             const Icon = n.icon;
             const active = location.pathname === n.to;
@@ -78,7 +78,7 @@ export default function Layout({ children }) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 inset-x-0 p-4" style={{ borderTop: "1px solid var(--border)", background: "white" }}>
+        <div className="shrink-0 p-4" style={{ borderTop: "1px solid var(--border)", background: "white" }}>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full flex items-center justify-center font-heading font-bold text-sm"
                  style={{ background: "var(--secondary-blue)", color: "#3A5A7D" }}>
@@ -95,7 +95,7 @@ export default function Layout({ children }) {
         </div>
       </aside>
 
-      {open && <div className="lg:hidden fixed inset-0 z-20 bg-black/30" onClick={() => setOpen(false)} />}
+      {open && <div className="lg:hidden fixed inset-0 z-40 bg-black/30" onClick={() => setOpen(false)} />}
 
       <main className="flex-1 min-w-0 pt-14 lg:pt-0">
         <div className="p-4 sm:p-6 lg:p-10 max-w-[1400px] mx-auto fade-in">
