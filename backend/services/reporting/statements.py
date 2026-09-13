@@ -183,6 +183,20 @@ async def _perubahan_ekuitas(start_date: str, end_date: str, unit_usaha_id: Opti
         {"no": 17, "label": "Saldo Laba Akhir (11+12+13-15-16)", "amount": saldo_laba_akhir, "bold": True},
         {"no": 20, "label": "EKUITAS AKHIR (8+17)", "amount": modal_akhir + saldo_laba_akhir, "bold": True},
     ]
-    return {"start_date": start_date, "end_date": end_date, "rows": rows,
-            "ekuitas_akhir": modal_akhir + saldo_laba_akhir,
-            "penyertaan_modal_akhir": modal_akhir, "saldo_laba_akhir": saldo_laba_akhir}
+    return {
+        "start_date": start_date,
+        "end_date": end_date,
+        "rows": rows,
+        "ekuitas_akhir": modal_akhir + saldo_laba_akhir,
+        "penyertaan_modal_akhir": modal_akhir,
+        "saldo_laba_akhir": saldo_laba_akhir,
+        "penyertaan_modal_awal": modal_desa_awal + modal_masyarakat_awal,
+        "modal_desa_awal": modal_desa_awal,
+        "modal_masyarakat_awal": modal_masyarakat_awal,
+        "tambah_desa": tambah_desa,
+        "tambah_masyarakat": tambah_masyarakat,
+        "saldo_laba_awal": saldo_laba_tahun_lalu,
+        "laba_periode": laba_ditahan,
+        "bagi_hasil_desa": pades,
+        "bagi_hasil_masyarakat": bagi_hasil_masyarakat,
+    }
