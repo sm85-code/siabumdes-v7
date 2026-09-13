@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || window.location.origin;
-const normalizedBackendUrl = BACKEND_URL.replace(/\/$/, "");
+const normalizedBackendUrl = BACKEND_URL.replace(/\/+$/, "").replace(/\/api$/i, "");
 export const API = `${normalizedBackendUrl}/api`;
 
 // withCredentials sends & receives the HttpOnly auth cookie automatically.
