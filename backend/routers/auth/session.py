@@ -115,7 +115,7 @@ async def login(payload: UserLogin, response: Response):
         raise HTTPException(status_code=401, detail="Username atau password salah")
     token = create_access_token(user.id, user.role, user.session_version, {"name": user.name, "unit": user.unit_usaha_id})
     response.set_cookie(
-        key=COOKIE_NAME, value=token, httponly=True, secure=True, samesite="lax",
+        key=COOKIE_NAME, value=token, httponly=True, secure=True, samesite="none",
         max_age=ACCESS_TOKEN_EXPIRE_HOURS * 3600, path="/",
     )
     return {"user": UserOut(**user.model_dump()).model_dump()}
