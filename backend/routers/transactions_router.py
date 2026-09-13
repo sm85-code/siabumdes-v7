@@ -1,6 +1,5 @@
 """Compatibility aggregator for modular routes."""
 from fastapi import APIRouter, Depends
-from config import API_PREFIX
 from dependencies import require_password_ready
 from routers.transactions import crud
 from routers.transactions import imports
@@ -8,7 +7,7 @@ from routers.transactions import proofs
 from routers.transactions import ledger
 from routers.transactions import exports
 
-router = APIRouter(prefix=API_PREFIX)
+router = APIRouter()
 router.include_router(crud.router, dependencies=[Depends(require_password_ready)])
 router.include_router(imports.router, dependencies=[Depends(require_password_ready)])
 router.include_router(proofs.router, dependencies=[Depends(require_password_ready)])
