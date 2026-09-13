@@ -38,6 +38,10 @@ def _pdf_header(story, styles, title: str, subtitle: str = ""):
     """Backwards-compatible wrapper (ignores `styles` arg, uses pdf_utils.STYLES)."""
     pdf_header(story, title, subtitle)
 
+
+def _signature_block():
+    return _sig_flow("Direktur BUM Desa", "Bendahara", "")
+
 from models import (
     User, UserCreate, UserLogin, UserOut, UserRole, PasswordResetRequest, ChangePasswordRequest, ProfileUpdateRequest,
     UnitUsaha, UnitUsahaCreate,
