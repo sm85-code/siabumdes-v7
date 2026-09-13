@@ -15,6 +15,7 @@ from sqlalchemy import CheckConstraint, DateTime, Index, Numeric, String, and_, 
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from fastapi.encoders import jsonable_encoder
 
 
 def _database_url() -> str:
@@ -207,14 +208,14 @@ class Repository:
             await connection.execute(text(f'CREATE {unique} INDEX IF NOT EXISTS "{index_name}" ON application_entities (namespace, {", ".join(parts)})'))
         return index_name
     async def create(self, payload):
-        item = copy.deepcopy(payload); item_id = str(item.get("id")); now = datetime.now(timezone.utc)
+        item = jsonable_encoder(copy.deepcopy(payload)); item_id = str(item.get("id")); now = datetime.now(timezone.utc)
         async with SessionLocal.begin() as session: session.add(StoredEntity(namespace=self.namespace, id=item_id, payload=item, created_at=now, updated_at=now))
         return OperationResult(inserted_id=item_id)
     async def create_many(self, payloads):
         if not payloads: return OperationResult()
         now = datetime.now(timezone.utc)
         async with SessionLocal.begin() as session:
-            session.add_all([StoredEntity(namespace=self.namespace, id=str(item.get("id")), payload=copy.deepcopy(item), created_at=now, updated_at=now) for item in payloads])
+            session.add_all([StoredEntity(namespace=self.namespace, id=str(item.get("id")), payload=jsonable_encoder(copy.deepcopy(item)), created_at=now, updated_at=now) for item in payloads])
         return OperationResult()
     async def modify_one(self, criteria, changes, upsert=False): return await self._modify(criteria, changes, upsert, True)
     async def modify_many(self, criteria, changes, upsert=False): return await self._modify(criteria, changes, upsert, False)

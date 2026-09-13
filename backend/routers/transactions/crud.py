@@ -143,7 +143,7 @@ async def create_transaction(payload: TransactionCreate, dep: dict = Depends(req
         unit_id = None
     await _check_period_not_closed(unit_id, payload.date)
     tx = Transaction(**{**payload.model_dump(), "unit_usaha_id": unit_id, "created_by": user.id})
-    await db.transactions.create(tx.model_dump())
+    await db.transactions.create(tx.model_dump(mode="json"))
     return tx
 
 @router.put("/transactions/{tx_id}")
@@ -159,10 +159,10 @@ async def update_transaction(tx_id: str, payload: TransactionCreate, dep: dict =
     if user.role == UserRole.PENGELOLA:
         if existing.get("unit_usaha_id") != user.unit_usaha_id:
             raise HTTPException(status_code=403, detail="Hanya bisa mengedit transaksi unit Anda")
-        payload_data = payload.model_dump()
+        payload_data = payload.model_dump(mode="json")
         payload_data["unit_usaha_id"] = user.unit_usaha_id
     else:
-        payload_data = payload.model_dump()
+        payload_data = payload.model_dump(mode="json")
     # Normalise: "" → None (BUMDES scope)
     if not payload_data.get("unit_usaha_id"):
         payload_data["unit_usaha_id"] = None
