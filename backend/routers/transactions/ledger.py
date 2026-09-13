@@ -109,7 +109,7 @@ async def ledger_report(
     unit_usaha_id: Optional[str] = None,
     payload: dict = Depends(require_roles(*REPORT_READ_LEVEL)),
 ):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     return await _ledger_data(account_code, start_date, end_date, unit_usaha_id)
 
 @router.get("/reports/ledger/pdf")
@@ -120,7 +120,7 @@ async def pdf_ledger(
     unit_usaha_id: Optional[str] = None,
     payload: dict = Depends(require_roles(*REPORT_READ_LEVEL)),
 ):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _ledger_data(account_code, start_date, end_date, unit_usaha_id)
     sig = await _signature_block()
 

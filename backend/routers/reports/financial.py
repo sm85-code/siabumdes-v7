@@ -104,25 +104,25 @@ router = APIRouter(prefix=API_PREFIX)
 @router.get("/reports/laba-rugi")
 async def rpt_laba_rugi(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                         payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     return await _laba_rugi(start_date, end_date, unit_usaha_id)
 
 @router.get("/reports/neraca")
 async def rpt_neraca(as_of_date: str, unit_usaha_id: Optional[str] = None,
                      payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     return await _neraca(as_of_date, unit_usaha_id)
 
 @router.get("/reports/arus-kas")
 async def rpt_arus_kas(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                        payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     return await _arus_kas(start_date, end_date, unit_usaha_id)
 
 @router.get("/reports/perubahan-ekuitas")
 async def rpt_pe(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     return await _perubahan_ekuitas(start_date, end_date, unit_usaha_id)
 
 @router.get("/reports/per-unit")
