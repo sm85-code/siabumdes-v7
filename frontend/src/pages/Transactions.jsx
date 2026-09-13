@@ -393,7 +393,7 @@ if (!(await confirm({
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <p className="label mb-1">Buku Kas</p>
+          <p className="label mb-1">JOURNAL ENTRY</p>
           <h1 className="font-heading text-3xl font-bold page-h1">Transaksi Keuangan</h1>
           <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
             Input transaksi cepat — laporan terbentuk otomatis.

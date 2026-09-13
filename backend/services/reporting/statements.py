@@ -126,72 +126,63 @@ async def _arus_kas(start_date: str, end_date: str, unit_usaha_id: Optional[str]
     }
 
 async def _perubahan_ekuitas(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None):
-    """PENYERTAAN MODAL: awal (desa + masyarakat) + tambahan = akhir
-    SALDO LABA: awal + L/R periode - bagi hasil desa - bagi hasil masyarakat = akhir
-    Deteksi via subcategory ekuitas: modal_desa, modal_masyarakat, saldo_laba,
-                                     bagi_hasil_desa, bagi_hasil_masyarakat.
-    """
-    lr = await _laba_rugi(start_date, end_date, unit_usaha_id, include_closing=False)
-    bal_awal, accounts = await _calc_balances_before(start_date, unit_usaha_id)
+    """Return the numbered BUMDES equity statement; unit statements are disabled."""
+    if unit_usaha_id:
+        return {"start_date": start_date, "end_date": end_date, "disabled": True, "rows": []}
+
+    lr = await _laba_rugi(start_date, end_date, None, include_closing=False)
+    bal_awal, accounts = await _calc_balances_before(start_date, None)
 
     def _sum_by(sub: str) -> float:
-        return sum(bal_awal.get(code, {}).get("saldo", 0)
-                   for code, a in accounts.items()
-                   if a.get("category") == "ekuitas" and a.get("subcategory") == sub)
+        return sum(bal_awal.get(code, {}).get("saldo", 0) for code, account in accounts.items()
+                   if account.get("category") == "ekuitas" and account.get("subcategory") == sub)
 
     modal_desa_awal = _sum_by("modal_desa")
     modal_masyarakat_awal = _sum_by("modal_masyarakat")
-    saldo_laba_awal = _sum_by("saldo_laba")
-
-    q = {"date": {"$gte": start_date, "$lte": end_date}, "unit_usaha_id": unit_usaha_id}
+    q = {"date": {"$gte": start_date, "$lte": end_date}, "unit_usaha_id": None}
     txs = await db.transactions.select(q, None).all(20000)
-    tambah_desa = 0.0
-    tambah_masyarakat = 0.0
-    bagi_hasil_desa = 0.0
-    bagi_hasil_masyarakat = 0.0
+    tambah_desa = tambah_masyarakat = 0.0
+    bagi_hasil_desa = bagi_hasil_masyarakat = 0.0
     for tx in txs:
-        c = accounts.get(tx["credit_account_code"], {})
-        d = accounts.get(tx["debit_account_code"], {})
-        amt = to_amount(tx.get("amount"))
-        if c.get("category") == "ekuitas" and c.get("subcategory") == "modal_desa":
-            tambah_desa += amt
-        if c.get("category") == "ekuitas" and c.get("subcategory") == "modal_masyarakat":
-            tambah_masyarakat += amt
-        if d.get("category") == "ekuitas" and d.get("subcategory") == "bagi_hasil_desa":
-            bagi_hasil_desa += amt
-        if d.get("category") == "ekuitas" and d.get("subcategory") == "bagi_hasil_masyarakat":
-            bagi_hasil_masyarakat += amt
+        credit = accounts.get(tx["credit_account_code"], {})
+        debit = accounts.get(tx["debit_account_code"], {})
+        amount = to_amount(tx.get("amount"))
+        if credit.get("category") == "ekuitas" and credit.get("subcategory") == "modal_desa": tambah_desa += amount
+        if credit.get("category") == "ekuitas" and credit.get("subcategory") == "modal_masyarakat": tambah_masyarakat += amount
+        if debit.get("category") == "ekuitas" and debit.get("subcategory") == "bagi_hasil_desa": bagi_hasil_desa += amount
+        if debit.get("category") == "ekuitas" and debit.get("subcategory") == "bagi_hasil_masyarakat": bagi_hasil_masyarakat += amount
 
-    modal_desa_akhir = modal_desa_awal + tambah_desa
-    modal_masyarakat_akhir = modal_masyarakat_awal + tambah_masyarakat
-    penyertaan_modal_akhir = modal_desa_akhir + modal_masyarakat_akhir
-
-    laba_periode = lr["laba_bersih"]
-    saldo_laba_akhir = saldo_laba_awal + laba_periode - bagi_hasil_desa - bagi_hasil_masyarakat
-
-    ekuitas_akhir = penyertaan_modal_akhir + saldo_laba_akhir
-
-    return {
-        "start_date": start_date, "end_date": end_date,
-        "modal_desa_awal": modal_desa_awal,
-        "modal_masyarakat_awal": modal_masyarakat_awal,
-        "penyertaan_modal_awal": modal_desa_awal + modal_masyarakat_awal,
-        "tambah_desa": tambah_desa,
-        "tambah_masyarakat": tambah_masyarakat,
-        "modal_desa_akhir": modal_desa_akhir,
-        "modal_masyarakat_akhir": modal_masyarakat_akhir,
-        "penyertaan_modal_akhir": penyertaan_modal_akhir,
-        "saldo_laba_awal": saldo_laba_awal,
-        "laba_periode": laba_periode,
-        "bagi_hasil_desa": bagi_hasil_desa,
-        "bagi_hasil_masyarakat": bagi_hasil_masyarakat,
-        "saldo_laba_akhir": saldo_laba_akhir,
-        "ekuitas_akhir": ekuitas_akhir,
-        # Backwards-compat keys (untuk endpoint PDF lama)
-        "modal_awal": modal_desa_awal + modal_masyarakat_awal,
-        "tambahan_modal": tambah_desa + tambah_masyarakat,
-        "pengurangan_modal": bagi_hasil_desa + bagi_hasil_masyarakat,
-        "net_perubahan_modal": (tambah_desa + tambah_masyarakat) - (bagi_hasil_desa + bagi_hasil_masyarakat),
-        "laba_bersih_periode": laba_periode,
-        "modal_akhir": ekuitas_akhir,
-    }
+    modal_akhir = modal_desa_awal + modal_masyarakat_awal + tambah_desa + tambah_masyarakat
+    laba_bersih = to_amount(lr["laba_bersih"])
+    bagi_pengurus = laba_bersih * 0.35
+    bagi_penasihat = laba_bersih * 0.07
+    bagi_pengawas = laba_bersih * 0.05
+    dana_sosial = laba_bersih * 0.05
+    pades = laba_bersih * 0.30
+    saldo_laba_dibagikan = bagi_pengurus + bagi_penasihat + bagi_pengawas + dana_sosial
+    saldo_laba_tahun_lalu = _sum_by("saldo_laba")
+    laba_ditahan = laba_bersih - saldo_laba_dibagikan
+    saldo_laba_akhir = saldo_laba_tahun_lalu + laba_ditahan - pades - bagi_hasil_masyarakat
+    rows = [
+        {"no": 1, "label": "PENYERTAAN MODAL", "amount": None, "kind": "section"},
+        {"no": 2, "label": "Penyertaan modal awal", "amount": modal_desa_awal + modal_masyarakat_awal, "indent": 0},
+        {"no": 3, "label": "Penyertaan Modal Desa", "amount": modal_desa_awal, "indent": 1},
+        {"no": 4, "label": "Penyertaan Modal Masyarakat", "amount": modal_masyarakat_awal, "indent": 1},
+        {"no": 5, "label": "Penambahan investasi periode berjalan", "amount": tambah_desa + tambah_masyarakat, "indent": 0},
+        {"no": 6, "label": "Penyertaan Modal Desa", "amount": tambah_desa, "indent": 1},
+        {"no": 7, "label": "Penyertaan Modal Masyarakat", "amount": tambah_masyarakat, "indent": 1},
+        {"no": 8, "label": "Penyertaan Modal Akhir (3+4+6+7)", "amount": modal_akhir, "bold": True},
+        {"no": 9, "label": "SALDO LABA", "amount": None, "kind": "section"},
+        {"no": 10, "label": "Saldo Laba Awal", "amount": saldo_laba_tahun_lalu, "indent": 0},
+        {"no": 11, "label": "Saldo laba belum dicadangkan", "amount": saldo_laba_tahun_lalu, "indent": 1},
+        {"no": 12, "label": "Saldo laba dicadangkan untuk modal BUMDES", "amount": _sum_by("saldo_laba"), "indent": 1},
+        {"no": 13, "label": "Laba (Rugi) periode berjalan", "amount": laba_ditahan, "indent": 1},
+        {"no": 14, "label": "Bagi Hasil Penyertaan", "amount": None, "indent": 0, "bold": True},
+        {"no": 15, "label": "Bagi Hasil Penyertaan Modal Desa (PADes 30%)", "amount": pades, "indent": 1},
+        {"no": 16, "label": "Bagi Hasil Penyertaan Modal Masyarakat", "amount": bagi_hasil_masyarakat, "indent": 1},
+        {"no": 17, "label": "Saldo Laba Akhir (11+12+13-15-16)", "amount": saldo_laba_akhir, "bold": True},
+        {"no": 20, "label": "EKUITAS AKHIR (8+17)", "amount": modal_akhir + saldo_laba_akhir, "bold": True},
+    ]
+    return {"start_date": start_date, "end_date": end_date, "rows": rows,
+            "ekuitas_akhir": modal_akhir + saldo_laba_akhir,
+            "penyertaan_modal_akhir": modal_akhir, "saldo_laba_akhir": saldo_laba_akhir}

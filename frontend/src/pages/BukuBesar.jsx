@@ -103,7 +103,7 @@ export default function BukuBesar() {
   return (
     <div className="space-y-6" data-testid="ledger-page">
       <div>
-        <p className="label mb-1">Drill-Down</p>
+        <p className="label mb-1">GENERAL LEDGER</p>
         <h1 className="font-heading text-3xl font-bold flex items-center gap-2 page-h1">
           <Books size={26} weight="duotone" color="#2E4F7C" /> Buku Besar per Akun
         </h1>
