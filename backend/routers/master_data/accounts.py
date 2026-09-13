@@ -9,6 +9,8 @@ from router_dependencies import (
     AccountCreate,
     DatabaseClient,
     CHART_OF_ACCOUNTS,
+    EXAMPLE_ROWS_BUMDES,
+    EXAMPLE_ROWS_UNIT,
     COOKIE_NAME,
     CORSMiddleware,
     ChangePasswordRequest,
@@ -42,6 +44,7 @@ from router_dependencies import (
     Transaction,
     TransactionCreate,
     UNIT_USAHA_SEED,
+    VALID_CATEGORIES,
     UnitUsaha,
     UnitUsahaCreate,
     UploadFile,
@@ -212,7 +215,7 @@ async def download_accounts_template(_: dict = Depends(require_roles(*ADMIN_LEVE
     buf = _io.BytesIO()
     wb.save(buf)
     buf.seek(0)
-    from fastrouter.responses import StreamingResponse as _SR
+    from fastapi.responses import StreamingResponse as _SR
     return _SR(
         buf,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

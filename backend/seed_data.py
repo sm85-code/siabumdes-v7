@@ -164,6 +164,12 @@ CHART_OF_ACCOUNTS = [
     ('6.2.99.61', 'Beban Operasional Lainnya', 'beban', 'beban_operasional', 'debit', 'UU06'),
 ]
 
+EXAMPLE_ROWS_BUMDES = [row[:5] for row in CHART_OF_ACCOUNTS if row[5] == "BUMDES"]
+EXAMPLE_ROWS_UNIT = {
+    group: [row[:5] for row in CHART_OF_ACCOUNTS if row[5] == group]
+    for group in ("UU01", "UU02", "UU03", "UU04", "UU05", "UU06")
+}
+
 UNIT_USAHA_SEED = [
     ('UU01', 'Pembibitan Domba Garut',
      'Kerjasama dengan ~15 mitra peternak domba di desa. Pengelola monitoring bulanan.',

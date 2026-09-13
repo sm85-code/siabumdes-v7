@@ -67,7 +67,9 @@ from router_dependencies import (
     _pdf_response,
     _per_unit_report,
     _perubahan_ekuitas,
+    _pdf_header,
     _section_row,
+    _signature_block,
     _sig_flow,
     _table_style,
     app,
@@ -106,7 +108,7 @@ async def pdf_lr(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
     unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _laba_rugi(start_date, end_date, unit_usaha_id)
-    sig = await _signature_block()
+    sig = _signature_block()
     def build():
         story = []
         _pdf_header(story, _STYLES, "LAPORAN LABA RUGI", f"Periode: {start_date} s.d. {end_date}")
@@ -138,7 +140,7 @@ async def pdf_neraca(as_of_date: str, unit_usaha_id: Optional[str] = None,
                      payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
     unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _neraca(as_of_date, unit_usaha_id)
-    sig = await _signature_block()
+    sig = _signature_block()
     def build():
         story = []
         _pdf_header(story, _STYLES, "NERACA", f"Per tanggal: {as_of_date}")
@@ -175,7 +177,7 @@ async def pdf_ak(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
     unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _arus_kas(start_date, end_date, unit_usaha_id)
-    sig = await _signature_block()
+    sig = _signature_block()
     def build():
         story = []
         _pdf_header(story, _STYLES, "LAPORAN ARUS KAS", f"Periode: {start_date} s.d. {end_date}")
@@ -207,7 +209,7 @@ async def pdf_pe(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
     unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _perubahan_ekuitas(start_date, end_date, unit_usaha_id)
-    sig = await _signature_block()
+    sig = _signature_block()
 
     def build():
         story = []
@@ -254,7 +256,7 @@ async def pdf_pe(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
 @router.get("/reports/per-unit/pdf")
 async def pdf_per_unit(start_date: str, end_date: str, _: dict = Depends(get_current_user_payload)):
     data = await _per_unit_report(start_date, end_date)
-    sig = await _signature_block()
+    sig = _signature_block()
     b = data.get("bumdes") or {}
 
     def build():
@@ -322,8 +324,33 @@ async def pdf_per_unit(start_date: str, end_date: str, _: dict = Depends(get_cur
 
 @router.get("/reports/calk/pdf")
 async def pdf_calk(start_date: str, end_date: str, _: dict = Depends(require_roles(*READ_LEVEL))):
-    data = await rpt_calk(start_date, end_date)
-    sig = await _signature_block()
+    lr = await _laba_rugi(start_date, end_date)
+    nr = await _neraca(end_date)
+    ak = await _arus_kas(start_date, end_date)
+    data = {
+        "informasi_umum": {
+            "nama": "BUMDES Karya Raharja",
+            "alamat": "Desa Wonoharjo, Kec. Pangandaran",
+            "direktur": "Budianto",
+            "dasar_hukum": "Kepmendesa PDTT No. 136 Tahun 2022",
+        },
+        "ringkasan_kinerja": {
+            "total_pendapatan": lr["total_pendapatan"],
+            "total_beban": lr["total_beban"],
+            "laba_bersih": lr["laba_bersih"],
+            "total_aset": nr["total_aset"],
+            "total_kewajiban": nr["total_kewajiban"],
+            "total_ekuitas": nr["total_ekuitas"],
+            "arus_kas_bersih": ak["arus_kas_bersih"],
+        },
+        "kebijakan_akuntansi": [
+            "Laporan disusun sesuai Kepmendesa PDTT No. 136 Tahun 2022.",
+            "Pengakuan pendapatan menggunakan basis akrual.",
+            "Bagi hasil pengelola sebesar 30% dari laba bersih unit usaha.",
+            "Bagi hasil BUMDES sebesar 70% dari laba bersih unit usaha.",
+        ],
+    }
+    sig = _signature_block()
     def build():
         story = []
         _pdf_header(story, _STYLES, "CATATAN ATAS LAPORAN KEUANGAN (CaLK)",

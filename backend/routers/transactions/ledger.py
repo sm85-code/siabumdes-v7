@@ -67,7 +67,9 @@ from router_dependencies import (
     _pdf_response,
     _per_unit_report,
     _perubahan_ekuitas,
+    _pdf_header,
     _section_row,
+    _signature_block,
     _sig_flow,
     _table_style,
     app,
@@ -122,7 +124,7 @@ async def pdf_ledger(
 ):
     unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _ledger_data(account_code, start_date, end_date, unit_usaha_id)
-    sig = await _signature_block()
+    sig = _signature_block()
 
     def build():
         story = []

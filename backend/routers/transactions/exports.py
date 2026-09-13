@@ -133,6 +133,12 @@ async def export_transactions_excel(
                "Kode Debit", "Nama Debit", "Kode Kredit", "Nama Kredit",
                "Nominal", "Referensi"]
 
+    def _amount(value):
+        try:
+            return float(value or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
     def _row_from_tx(t: dict):
         uid = t.get("unit_usaha_id")
         grp = units.get(uid, {}).get("code") if uid else "BUMDES"
@@ -143,7 +149,7 @@ async def export_transactions_excel(
             t.get("description", "") or "",
             d_code, accounts.get(d_code, {}).get("name", ""),
             c_code, accounts.get(c_code, {}).get("name", ""),
-            t.get("amount", 0),
+            _amount(t.get("amount")),
             t.get("reference", "") or "",
         ]
 
@@ -168,7 +174,7 @@ async def export_transactions_excel(
             total = 0
             for t in txs:
                 ws.append(_row_from_tx(t))
-                total += t.get("amount", 0)
+                total += _amount(t.get("amount"))
             ws.append(["", "", "", "TOTAL", "", "", "", "", total, ""])
             for c in ws[ws.max_row]:
                 c.font = bold; c.fill = total_fill

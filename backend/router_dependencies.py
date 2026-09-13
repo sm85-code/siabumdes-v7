@@ -38,6 +38,10 @@ def _pdf_header(story, styles, title: str, subtitle: str = ""):
     """Backwards-compatible wrapper (ignores `styles` arg, uses pdf_utils.STYLES)."""
     pdf_header(story, title, subtitle)
 
+
+def _signature_block():
+    return _sig_flow("Direktur BUM Desa", "Bendahara", "")
+
 from models import (
     User, UserCreate, UserLogin, UserOut, UserRole, PasswordResetRequest, ChangePasswordRequest, ProfileUpdateRequest,
     UnitUsaha, UnitUsahaCreate,
@@ -51,7 +55,14 @@ from services.jwt_service import (
     hash_password, verify_password, create_access_token,
     get_current_user_payload, require_roles, COOKIE_NAME, ACCESS_TOKEN_EXPIRE_HOURS,
 )
-from seed_data import CHART_OF_ACCOUNTS, UNIT_USAHA_SEED, VALID_CATEGORIES, VALID_ACCOUNT_CATEGORIES
+from seed_data import (
+    CHART_OF_ACCOUNTS,
+    EXAMPLE_ROWS_BUMDES,
+    EXAMPLE_ROWS_UNIT,
+    UNIT_USAHA_SEED,
+    VALID_CATEGORIES,
+    VALID_ACCOUNT_CATEGORIES,
+)
 
 # Kept as compatibility symbols for modular routers; database access is PostgreSQL-backed.
 DatabaseClient = Any
