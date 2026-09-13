@@ -227,11 +227,12 @@ class Repository:
             if not rows and upsert:
                 data = {k: v for k, v in criteria.items() if not k.startswith("$") and not isinstance(v, dict)}
                 data.update(changes.get("set", changes)); data.setdefault("id", os.urandom(12).hex())
+                data = jsonable_encoder(data)
                 now = datetime.now(timezone.utc); session.add(StoredEntity(namespace=self.namespace, id=str(data["id"]), payload=data, created_at=now, updated_at=now)); return OperationResult(inserted_id=str(data["id"]))
             for row in rows:
                 data = copy.deepcopy(row.payload); data.update(changes.get("set", {}))
                 for key in changes.get("unset", {}): data.pop(key, None)
-                row.payload, row.updated_at = data, datetime.now(timezone.utc)
+                row.payload, row.updated_at = jsonable_encoder(data), datetime.now(timezone.utc)
             return OperationResult(modified_count=len(rows), matched_count=len(rows))
     async def remove_one(self, criteria): return await self._remove(criteria, True)
     async def remove_many(self, criteria): return await self._remove(criteria, False)
