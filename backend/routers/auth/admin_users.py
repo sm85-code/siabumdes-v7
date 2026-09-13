@@ -101,7 +101,7 @@ from router_dependencies import (
 
 router = APIRouter()
 
-router.post("/auth/register")
+@router.post("/auth/register")
 async def register(payload: UserCreate, admin: dict = Depends(require_roles("admin"))):
     exists = await db.users.select_one({"$or": [{"email": payload.email}, {"username": payload.username}]})
     if exists:
@@ -119,12 +119,12 @@ async def register(payload: UserCreate, admin: dict = Depends(require_roles("adm
     await db.users.create(user.model_dump())
     return UserOut(**user.model_dump())
 
-router.get("/users", response_model=List[UserOut])
+@router.get("/users", response_model=List[UserOut])
 async def list_users(admin: dict = Depends(require_roles("admin"))):
     docs = await db.users.select({}, {"_id": 0, "password_hash": 0}).all(200)
     return [UserOut(**d) for d in docs]
 
-router.post("/users/{user_id}/reset-password")
+@router.post("/users/{user_id}/reset-password")
 async def reset_password(user_id: str, payload: PasswordResetRequest,
                          admin: dict = Depends(require_roles("admin"))):
     if len(payload.new_password) < 8:
@@ -139,12 +139,12 @@ async def reset_password(user_id: str, payload: PasswordResetRequest,
         raise HTTPException(status_code=404, detail="User tidak ditemukan")
     return {"ok": True}
 
-router.delete("/users/{user_id}")
+@router.delete("/users/{user_id}")
 async def delete_user(user_id: str, admin: dict = Depends(require_roles("admin"))):
     r = await db.users.remove_one({"id": user_id})
     return {"deleted": r.deleted_count}
 
-router.put("/users/{user_id}/blocked-periods")
+@router.put("/users/{user_id}/blocked-periods")
 async def set_blocked_periods(user_id: str, payload: dict, admin: dict = Depends(require_roles("admin"))):
     """Admin sets the list of blocked YYYY-MM periods for a user (transaction lock)."""
     periods = payload.get("blocked_periods", [])

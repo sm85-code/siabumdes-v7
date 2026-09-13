@@ -101,7 +101,7 @@ from router_dependencies import (
 
 router = APIRouter()
 
-router.post("/auth/login")
+@router.post("/auth/login")
 async def login(payload: UserLogin, response: Response):
     doc = await db.users.select_one(
         {"$or": [{"username": payload.username}, {"email": payload.username}]}, {"_id": 0}
@@ -120,12 +120,12 @@ async def login(payload: UserLogin, response: Response):
     )
     return {"user": UserOut(**user.model_dump()).model_dump()}
 
-router.post("/auth/logout")
+@router.post("/auth/logout")
 async def logout(response: Response):
     response.delete_cookie(key=COOKIE_NAME, path="/")
     return {"ok": True}
 
-router.get("/auth/me", response_model=UserOut)
+@router.get("/auth/me", response_model=UserOut)
 async def me(payload: dict = Depends(get_current_user_payload)):
     user = await user_from_payload(payload)
     return UserOut(**user.model_dump())
