@@ -43,7 +43,7 @@ services:
         type: SECRET
       - key: CORS_ORIGINS
         scope: RUN_TIME
-        value: ${frontend.PUBLIC_URL}
+        value: ${frontend.PUBLIC_URL},https://starfish-app-9qi6i.ondigitalocean.app
 
 static_sites:
   - name: frontend
