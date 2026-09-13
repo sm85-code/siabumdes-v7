@@ -34,8 +34,9 @@ async def _ledger_data(account_code: str, start_date: Optional[str], end_date: O
             prev_q["unit_usaha_id"] = unit_usaha_id
         prev_txs = await db.transactions.select(prev_q, None).all(20000)
         for tx in prev_txs:
-            d = tx["amount"] if tx["debit_account_code"] == account_code else 0
-            k = tx["amount"] if tx["credit_account_code"] == account_code else 0
+            amount = to_amount(tx.get("amount"))
+            d = amount if tx["debit_account_code"] == account_code else 0
+            k = amount if tx["credit_account_code"] == account_code else 0
             if acc["normal_balance"] == "debit":
                 saldo_awal += d - k
             else:
@@ -47,8 +48,9 @@ async def _ledger_data(account_code: str, start_date: Optional[str], end_date: O
     entries = []
     accounts_map = await _get_accounts_map(grp)
     for tx in txs:
-        d = tx["amount"] if tx["debit_account_code"] == account_code else 0
-        k = tx["amount"] if tx["credit_account_code"] == account_code else 0
+        amount = to_amount(tx.get("amount"))
+        d = amount if tx["debit_account_code"] == account_code else 0
+        k = amount if tx["credit_account_code"] == account_code else 0
         other = tx["credit_account_code"] if tx["debit_account_code"] == account_code else tx["debit_account_code"]
         if acc["normal_balance"] == "debit":
             running += d - k

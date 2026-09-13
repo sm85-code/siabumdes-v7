@@ -24,7 +24,7 @@ async def _per_unit_report(start_date: str, end_date: str):
             continue
         d_acc = accounts_bumdes.get(tx["debit_account_code"], {})
         c_acc = accounts_bumdes.get(tx["credit_account_code"], {})
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         if c_acc.get("category") == "pendapatan":
             p_bumdes += amt
         if d_acc.get("category") == "beban":
@@ -57,10 +57,11 @@ async def _per_unit_report(start_date: str, end_date: str):
                 continue
             d_acc = acc_map.get(tx["debit_account_code"], {})
             c_acc = acc_map.get(tx["credit_account_code"], {})
+            amount = to_amount(tx.get("amount"))
             if c_acc.get("category") == "pendapatan":
-                pendapatan += tx.get("amount", 0)
+                pendapatan += amount
             if d_acc.get("category") == "beban":
-                beban += tx.get("amount", 0)
+                beban += amount
         laba = pendapatan - beban
         result.append({
             "id": u["id"], "code": u["code"], "name": u["name"],

@@ -121,6 +121,11 @@ def _filter_condition(criteria: dict[str, Any]):
         if key in {"all_of", "$and"}:
             conditions.append(and_(*(_filter_condition(branch) for branch in expected))); continue
         column = _json_value(key)
+        if expected is None:
+            # JSONB stores null as a JSON value, while missing keys resolve to SQL NULL.
+            json_value = StoredEntity.payload[key]
+            conditions.append(or_(json_value.is_(None), json_value == text("'null'::jsonb")))
+            continue
         if isinstance(expected, dict):
             for raw_op, value in expected.items():
                 op = {"$exists": "exists", "$in": "in", "$nin": "not_in", "$ne": "not_equal", "$gte": "at_least", "$gt": "above", "$lte": "at_most", "$lt": "below"}.get(raw_op, raw_op)
