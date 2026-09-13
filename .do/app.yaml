@@ -1,0 +1,47 @@
+name: bumdes-karya-raharja
+region: sgp
+services:
+  - name: backend
+    source_dir: /backend
+    github:
+      repo: ua921-code/vite-migration
+      branch: main
+      deploy_on_push: true
+    environment_slug: python
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    http_port: 8000
+    run_command: uvicorn server:app --host 0.0.0.0 --port ${PORT}
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: CORS_ORIGINS
+        scope: RUN_TIME
+        value: ${APP_URL}
+
+static_sites:
+  - name: frontend
+    source_dir: /frontend
+    github:
+      repo: ua921-code/vite-migration
+      branch: main
+      deploy_on_push: true
+    environment_slug: node-js
+    build_command: yarn install --frozen-lockfile && yarn build
+    output_dir: /dist
+    envs:
+      - key: VITE_BACKEND_URL
+        scope: BUILD_TIME
+        value: ${BACKEND_URL}
+    catchall_document: index.html
