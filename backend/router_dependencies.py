@@ -75,6 +75,14 @@ from dependencies import fmt_rp, user_from_payload, scope_unit_for_pengelola, re
 from startup import seed_startup as seed_database
 
 
+async def _group_from_unit(unit_usaha_id: Optional[str]) -> str:
+    """Resolve report group without relying on a re-exported helper."""
+    if not unit_usaha_id:
+        return "BUMDES"
+    unit = await db.unit_usaha.select_one({"id": unit_usaha_id}, None)
+    return (unit or {}).get("code") or "BUMDES"
+
+
 async def _check_period_not_blocked(dep: dict, date_value: str) -> None:
     """Reject writes to a period closed for the transaction's group."""
     if not date_value or len(date_value) < 7:
