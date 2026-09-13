@@ -57,7 +57,7 @@ export default function Landing() {
              style={{ background: "var(--primary-light)", color: "var(--primary-dark)" }}>
           PAPAN KINERJA · BUMDes · TAHUN {data?.year || new Date().getFullYear()}
         </div>
-        <h1 className="font-heading font-bold text-3xl sm:text-5xl lg:text-6xl leading-[1.15] tracking-tight fade-slow"
+        <h1 className="modern-brand-title text-3xl sm:text-5xl lg:text-6xl leading-[1.08] fade-slow"
             style={{ color: "var(--primary-dark)", animationDelay: "0.08s" }}>
           SIA BUMDes{" "}
           <span style={{ background: "linear-gradient(120deg, #4A9DC1 0%, #7BC0DC 40%, #A8DDD5 80%, #F4C48A 100%)",
