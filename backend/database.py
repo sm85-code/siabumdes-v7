@@ -122,7 +122,9 @@ def _filter_condition(criteria: dict[str, Any]):
             conditions.append(and_(*(_filter_condition(branch) for branch in expected))); continue
         column = _json_value(key)
         if expected is None:
-            conditions.append(StoredEntity.payload[key].is_(None))
+            # JSONB stores null as a JSON value, while missing keys resolve to SQL NULL.
+            json_value = StoredEntity.payload[key]
+            conditions.append(or_(json_value.is_(None), json_value == text("'null'::jsonb")))
             continue
         if isinstance(expected, dict):
             for raw_op, value in expected.items():

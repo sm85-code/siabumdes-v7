@@ -26,7 +26,7 @@ async def _calc_balances(start_date: Optional[str], end_date: Optional[str], uni
     txs = await db.transactions.select(q, None).all(20000)
     bal: dict = {}
     for tx in txs:
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         d = tx["debit_account_code"]
         c = tx["credit_account_code"]
         bal.setdefault(d, {"debit": 0, "credit": 0})
@@ -52,7 +52,7 @@ async def _calc_balances_before(before_date: str, unit_usaha_id: Optional[str] =
     txs = await db.transactions.select(q, None).all(20000)
     bal: dict = {}
     for tx in txs:
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         d = tx["debit_account_code"]
         c = tx["credit_account_code"]
         bal.setdefault(d, {"debit": 0, "credit": 0})

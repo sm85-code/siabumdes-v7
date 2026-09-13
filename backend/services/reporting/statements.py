@@ -26,7 +26,7 @@ async def _laba_rugi(start_date: str, end_date: str, unit_usaha_id: Optional[str
             txs = [tx for tx in txs if (tx.get("date") or "")[:7] not in closed_periods]
     bal: dict = {}
     for tx in txs:
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         d = tx["debit_account_code"]
         c = tx["credit_account_code"]
         bal.setdefault(d, {"debit": 0, "credit": 0})
@@ -103,7 +103,7 @@ async def _arus_kas(start_date: str, end_date: str, unit_usaha_id: Optional[str]
     kas_keluar = []
     tot_masuk, tot_keluar = 0.0, 0.0
     for tx in txs:
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         d = tx["debit_account_code"]
         c = tx["credit_account_code"]
         if d in kas_codes and c not in kas_codes:
@@ -149,7 +149,7 @@ async def _perubahan_ekuitas(start_date: str, end_date: str, unit_usaha_id: Opti
     for tx in txs:
         c = accounts.get(tx["credit_account_code"], {})
         d = accounts.get(tx["debit_account_code"], {})
-        amt = tx.get("amount", 0)
+        amt = to_amount(tx.get("amount"))
         if c.get("category") == "ekuitas" and c.get("subcategory") == "modal_desa":
             tambah_desa += amt
         if c.get("category") == "ekuitas" and c.get("subcategory") == "modal_masyarakat":
