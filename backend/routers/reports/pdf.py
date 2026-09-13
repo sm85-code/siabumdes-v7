@@ -72,6 +72,7 @@ from router_dependencies import (
     _signature_block,
     _sig_flow,
     _table_style,
+    scope_unit_for_pengelola,
     app,
     client,
     close_database,
@@ -323,7 +324,11 @@ async def pdf_per_unit(start_date: str, end_date: str, _: dict = Depends(get_cur
     return _pdf_response(build, f"Rekap-Kinerja_{start_date}_sd_{end_date}.pdf")
 
 @router.get("/reports/calk/pdf")
-async def pdf_calk(start_date: str, end_date: str, _: dict = Depends(require_roles(*READ_LEVEL))):
+async def pdf_calk(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
+                   payload: dict = Depends(require_roles(*READ_LEVEL))):
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
+    if unit_usaha_id:
+        raise HTTPException(status_code=404, detail="CALK hanya tersedia untuk grup BUMDES")
     lr = await _laba_rugi(start_date, end_date)
     nr = await _neraca(end_date)
     ak = await _arus_kas(start_date, end_date)
