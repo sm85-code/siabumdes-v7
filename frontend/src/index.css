@@ -43,6 +43,12 @@ h1, h2, h3, h4, .heading {
 }
 
 .font-heading { font-family: 'Outfit', system-ui, sans-serif; letter-spacing: -0.015em; }
+.modern-brand-title {
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
 .font-body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
 .tabular-nums { font-variant-numeric: tabular-nums; letter-spacing: 0.005em; }
 .page-h1 { letter-spacing: -0.02em; }
