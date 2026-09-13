@@ -4,7 +4,7 @@ services:
   - name: backend
     source_dir: /backend
     github:
-      repo: ua921-code/vite-migration
+      repo: sm85-code/siabumdes-v7
       branch: main
       deploy_on_push: true
     environment_slug: python
@@ -28,13 +28,13 @@ services:
         type: SECRET
       - key: CORS_ORIGINS
         scope: RUN_TIME
-        value: ${APP_URL}
+        value: ${frontend.PUBLIC_URL}
 
 static_sites:
   - name: frontend
     source_dir: /frontend
     github:
-      repo: ua921-code/vite-migration
+      repo: sm85-code/siabumdes-v7
       branch: main
       deploy_on_push: true
     environment_slug: node-js
@@ -43,5 +43,5 @@ static_sites:
     envs:
       - key: VITE_BACKEND_URL
         scope: BUILD_TIME
-        value: ${BACKEND_URL}
+        value: ${backend.PUBLIC_URL}
     catchall_document: index.html
