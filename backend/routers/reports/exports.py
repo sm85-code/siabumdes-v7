@@ -111,7 +111,7 @@ async def export_report_excel(
     account_code: Optional[str] = None,
     payload: dict = Depends(require_roles(*REPORT_READ_LEVEL)),
 ):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     """Universal Excel export untuk semua jenis laporan."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment

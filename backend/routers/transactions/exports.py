@@ -205,7 +205,7 @@ async def export_transactions_excel(
             fname = f"Transaksi_Semua_Data_{datetime.now().strftime('%Y%m%d')}.xlsx"
     else:
         # Single-sheet: existing behaviour with unit_usaha_id + date range filter
-        unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+        unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
         q: dict = {}
         if unit_usaha_id == "":
             q["unit_usaha_id"] = None

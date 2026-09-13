@@ -104,7 +104,7 @@ router = APIRouter(prefix=API_PREFIX)
 @router.get("/reports/laba-rugi/pdf")
 async def pdf_lr(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _laba_rugi(start_date, end_date, unit_usaha_id)
     sig = await _signature_block()
     def build():
@@ -136,7 +136,7 @@ async def pdf_lr(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
 @router.get("/reports/neraca/pdf")
 async def pdf_neraca(as_of_date: str, unit_usaha_id: Optional[str] = None,
                      payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _neraca(as_of_date, unit_usaha_id)
     sig = await _signature_block()
     def build():
@@ -173,7 +173,7 @@ async def pdf_neraca(as_of_date: str, unit_usaha_id: Optional[str] = None,
 @router.get("/reports/arus-kas/pdf")
 async def pdf_ak(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _arus_kas(start_date, end_date, unit_usaha_id)
     sig = await _signature_block()
     def build():
@@ -205,7 +205,7 @@ async def pdf_ak(start_date: str, end_date: str, unit_usaha_id: Optional[str] = 
 @router.get("/reports/perubahan-ekuitas/pdf")
 async def pdf_pe(start_date: str, end_date: str, unit_usaha_id: Optional[str] = None,
                  payload: dict = Depends(require_roles(*REPORT_READ_LEVEL))):
-    unit_usaha_id = await _scope_unit_for_pengelola(payload, unit_usaha_id)
+    unit_usaha_id = await scope_unit_for_pengelola(payload, unit_usaha_id)
     data = await _perubahan_ekuitas(start_date, end_date, unit_usaha_id)
     sig = await _signature_block()
 
