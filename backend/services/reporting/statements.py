@@ -181,7 +181,7 @@ async def _perubahan_ekuitas(start_date: str, end_date: str, unit_usaha_id: Opti
         {"no": 15, "label": "Bagi Hasil Penyertaan Modal Desa (PADes 30%)", "amount": pades, "indent": 1},
         {"no": 16, "label": "Bagi Hasil Penyertaan Modal Masyarakat", "amount": bagi_hasil_masyarakat, "indent": 1},
         {"no": 17, "label": "Saldo Laba Akhir (11+12+13-15-16)", "amount": saldo_laba_akhir, "bold": True},
-        {"no": 20, "label": "EKUITAS AKHIR (8+17)", "amount": modal_akhir + saldo_laba_akhir, "bold": True},
+        {"no": 18, "label": "EKUITAS AKHIR (8+17)", "amount": modal_akhir + saldo_laba_akhir, "bold": True},
     ]
     return {
         "start_date": start_date,
