@@ -75,7 +75,14 @@ export default function Reports() {
     });
   }, [isPengelola, user]);
 
-  const cfg = REPORTS.find(r => r.key === active) || REPORTS[0];
+  const visibleReports = groupKey === "BUMDES" ? REPORTS : REPORTS.filter(r => !["perubahan-ekuitas", "calk"].includes(r.key));
+  const cfg = visibleReports.find(r => r.key === active) || visibleReports[0];
+  useEffect(() => {
+    if (groupKey !== "BUMDES" && ["perubahan-ekuitas", "calk"].includes(active)) {
+      setActive("neraca");
+      setData(null);
+    }
+  }, [groupKey, active]);
   const groupOptions = useMemo(() => {
     const list = [{ code: "BUMDES", name: "Pusat", id: null }];
     ["UU01", "UU02", "UU03", "UU04", "UU05", "UU06"].forEach(code => {
@@ -161,7 +168,7 @@ export default function Reports() {
 
       {tab === "laporan" && (
         <div className="tab-strip">
-          {REPORTS.map(r => {
+          {visibleReports.map(r => {
             const Icon = r.icon;
             const isActive = active === r.key;
             return (
@@ -494,38 +501,14 @@ function ReportBody({ active, data }) {
     );
   }
   if (active === "perubahan-ekuitas") {
-    const sh = (label, val, bold = false, indent = 0) => (
-      <tr style={bold ? { background: "#EEF3F9", fontWeight: 600 } : undefined}>
-        <td style={{ paddingLeft: 12 + indent * 20 }}>{label}</td>
-        <td className="num">{fmtRp(val)}</td>
+    const row = (item) => item.kind === "section" ? (
+      <tr key={item.no} style={{ background: "#DCE8FE", fontWeight: 700 }}><td>{item.no}</td><td>{item.label}</td><td></td></tr>
+    ) : (
+      <tr key={item.no} style={item.bold ? { background: "#EEF3F9", fontWeight: 700 } : undefined}>
+        <td>{item.no}</td><td style={{ paddingLeft: 12 + (item.indent || 0) * 20 }}>{item.label}</td><td className="num">{fmtRp(item.amount)}</td>
       </tr>
     );
-    return (
-      <table className="tbl" style={{ minWidth: 480 }}>
-        <thead><tr><th>Uraian</th><th className="num">Jumlah</th></tr></thead>
-        <tbody>
-          <tr style={{ background: "#DCE8FE", fontWeight: 700 }}><td>PENYERTAAN MODAL</td><td></td></tr>
-          {sh("Penyertaan modal awal", data.penyertaan_modal_awal, false, 0)}
-          {sh("Penyertaan modal desa", data.modal_desa_awal, false, 1)}
-          {sh("Penyertaan modal masyarakat", data.modal_masyarakat_awal, false, 1)}
-          {sh("Penambahan penyertaan modal periode berjalan", data.tambah_desa + data.tambah_masyarakat, false, 0)}
-          {sh("Penyertaan modal desa", data.tambah_desa, false, 1)}
-          {sh("Penyertaan modal masyarakat", data.tambah_masyarakat, false, 1)}
-          {sh("Penyertaan modal akhir", data.penyertaan_modal_akhir, true, 0)}
-          <tr style={{ background: "#DCE8FE", fontWeight: 700 }}><td>SALDO LABA</td><td></td></tr>
-          {sh("Saldo laba awal", data.saldo_laba_awal, false, 0)}
-          {sh("Laba/rugi periode berjalan", data.laba_periode, false, 1)}
-          {sh("Bagi hasil penyertaan", data.bagi_hasil_desa + data.bagi_hasil_masyarakat, false, 0)}
-          {sh("Bagi hasil penyertaan modal desa", data.bagi_hasil_desa, false, 1)}
-          {sh("Bagi hasil penyertaan modal masyarakat", data.bagi_hasil_masyarakat, false, 1)}
-          {sh("Saldo laba akhir", data.saldo_laba_akhir, true, 0)}
-          <tr style={{ background: "#7BA7E1", color: "white", fontWeight: 700 }}>
-            <td>EKUITAS AKHIR</td>
-            <td className="num">{fmtRp(data.ekuitas_akhir)}</td>
-          </tr>
-        </tbody>
-      </table>
-    );
+    return <table className="tbl" style={{ minWidth: 620 }}><thead><tr><th>No.</th><th>Uraian</th><th className="num">Jumlah (Rp)</th></tr></thead><tbody>{data.rows.map(row)}</tbody></table>;
   }
   if (active === "calk") {
     return (
