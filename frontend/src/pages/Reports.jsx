@@ -19,10 +19,10 @@ const monthRange = (year, month) => {
 
 // Sub-tabs report: keys sama untuk BUMDES dan Unit — backend pakai unit_usaha_id untuk scoping.
 const REPORTS = [
-  { key: "neraca", label: "Neraca", icon: Scales, needsRange: false },
   { key: "laba-rugi", label: "Laporan Laba Rugi", icon: ChartLine, needsRange: true },
+  { key: "perubahan-ekuitas", label: "Laporan Perubahan Ekuitas", icon: TrendUp, needsRange: true },
+  { key: "neraca", label: "Laporan Posisi Keuangan (Neraca)", icon: Scales, needsRange: false },
   { key: "arus-kas", label: "Laporan Arus Kas", icon: Coins, needsRange: true },
-  { key: "perubahan-ekuitas", label: "Perubahan Ekuitas", icon: TrendUp, needsRange: true },
   { key: "calk", label: "Catatan atas Laporan Keuangan (CaLK)", icon: BookOpen, needsRange: true },
 ];
 
@@ -37,7 +37,7 @@ export default function Reports() {
   const { start, end } = monthRange(year, month);
   // tab: laporan | kinerja
   const [tab, setTab] = useState("laporan");
-  const [active, setActive] = useState("neraca");
+  const [active, setActive] = useState("laba-rugi");
   // Dropdown 7 kelompok
   const [groupKey, setGroupKey] = useState("BUMDES");  // BUMDES | UU01..UU06
   const [units, setUnits] = useState([]);
