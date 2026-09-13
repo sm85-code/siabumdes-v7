@@ -193,6 +193,38 @@ async def export_report_excel(
                 for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
             elif item.get("bold"):
                 for c in ws[ws.max_row]: c.font = bold; c.fill = total_fill
+    elif report_type == "calk":
+        if unit_usaha_id:
+            raise HTTPException(status_code=404, detail="CALK hanya tersedia untuk grup BUMDES")
+        laba = await _laba_rugi(start_date, end_date)
+        neraca = await _neraca(end_date)
+        arus_kas = await _arus_kas(start_date, end_date)
+        hdr("Catatan atas Laporan Keuangan (CaLK)", f"Periode: {start_date} s.d. {end_date}")
+        ws.append(["Bagian", "Uraian", "Jumlah (Rp)"])
+        for c in ws[ws.max_row]: c.font = bold; c.fill = header_fill
+        ws.append(["1", "Informasi umum", ""])
+        ws.append(["", "Nama", "BUMDES Karya Raharja"])
+        ws.append(["", "Alamat", "Desa Wonoharjo, Kecamatan Pangandaran"])
+        ws.append(["", "Dasar hukum", "Kepmendesa PDTT No. 136 Tahun 2022"])
+        ws.append(["2", "Ringkasan kinerja", ""])
+        for label, value in [
+            ("Total pendapatan", laba["total_pendapatan"]),
+            ("Total beban", laba["total_beban"]),
+            ("Laba bersih", laba["laba_bersih"]),
+            ("Total aset", neraca["total_aset"]),
+            ("Total kewajiban", neraca["total_kewajiban"]),
+            ("Total ekuitas", neraca["total_ekuitas"]),
+            ("Arus kas bersih", arus_kas["arus_kas_bersih"]),
+        ]:
+            ws.append(["", label, value])
+        ws.append(["3", "Kebijakan akuntansi", ""])
+        for policy in [
+            "Laporan disusun sesuai Kepmendesa PDTT No. 136 Tahun 2022.",
+            "Pengakuan pendapatan menggunakan basis akrual.",
+            "Bagi hasil pengelola sebesar 30% dari laba bersih unit usaha.",
+            "Bagi hasil BUMDES sebesar 70% dari laba bersih unit usaha.",
+        ]:
+            ws.append(["", policy, ""])
     elif report_type == "per-unit":
         data = await _per_unit_report(start_date, end_date)
         b = data.get("bumdes") or {}
