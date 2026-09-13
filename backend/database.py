@@ -48,7 +48,13 @@ class StoredEntity(Base):
     )
 
 
-engine = create_async_engine(_database_url(), connect_args={"ssl": "require"}, pool_pre_ping=True, pool_recycle=300)
+engine = create_async_engine(
+    _database_url(),
+    connect_args={"ssl": "require", "timeout": 15},
+    pool_pre_ping=True,
+    pool_recycle=300,
+    pool_timeout=15,
+)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
