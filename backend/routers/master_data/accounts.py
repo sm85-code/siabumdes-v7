@@ -313,17 +313,39 @@ async def import_transaction_types(file: UploadFile = File(...), _: dict = Depen
 @router.get("/transaction-types/template")
 async def transaction_types_template(_: dict = Depends(require_roles(*ADMIN_LEVEL))):
     from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
     import io as _io
     wb = Workbook()
-    ws = wb.active
-    ws.title = "Jenis Transaksi"
+    instructions = wb.active
+    instructions.title = "Instruksi"
+    instructions.append(["PANDUAN PENGISIAN JENIS TRANSAKSI"])
+    instructions.append(["1. Isi satu jenis transaksi pada setiap baris di sheet Jenis Transaksi."])
+    instructions.append(["2. Kolom code wajib unik dan tanpa spasi, contoh: penjualan_kios."])
+    instructions.append(["3. Kolom name berisi nama transaksi yang mudah dipahami."])
+    instructions.append(["4. Kolom debit dan credit berisi kode akun dari kelompok yang dipilih."])
+    instructions.append(["5. Kolom group diisi BUMDES atau kode unit UU01 sampai UU06."])
+    instructions.append(["6. Jangan mengubah nama kolom dan hapus baris contoh sebelum import."])
+    instructions.column_dimensions["A"].width = 110
+    for cell in instructions[1]:
+        cell.font = Font(bold=True, color="FFFFFF", size=14)
+        cell.fill = PatternFill("solid", fgColor="2E4F32")
+    for row in instructions.iter_rows():
+        for cell in row: cell.alignment = Alignment(wrap_text=True, vertical="top")
+    ws = wb.create_sheet("Jenis Transaksi")
     ws.append(["code", "name", "debit", "credit", "group"])
+    ws.append(["penjualan_kios", "Penjualan Kios", "4-1100", "4-4100", "BUMDES"])
+    for cell in ws[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="2E4F32")
+    for column, width in {"A": 24, "B": 32, "C": 18, "D": 18, "E": 14}.items():
+        ws.column_dimensions[column].width = width
+    ws.freeze_panes = "A2"
     buf = _io.BytesIO(); wb.save(buf); buf.seek(0)
     return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": 'attachment; filename="Template-Jenis-Transaksi.xlsx"'})
 
 @router.get("/master-data/export")
-async def export_master_data(group: str = Query("BUMDES"), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
-    """Export akun dan jenis transaksi untuk satu kelompok terpilih."""
+async def export_master_data(group: str = Query("BUMDES"), section: str = Query("all"), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
+    """Export kode akun atau jenis transaksi untuk satu kelompok terpilih."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
     import io as _io
@@ -331,6 +353,8 @@ async def export_master_data(group: str = Query("BUMDES"), _: dict = Depends(req
     valid_groups = {"BUMDES", "UU01", "UU02", "UU03", "UU04", "UU05", "UU06"}
     if group not in valid_groups:
         raise HTTPException(400, "Kelompok tidak valid")
+    if section not in {"all", "accounts", "transaction-types"}:
+        raise HTTPException(400, "Jenis export tidak valid")
     wb = Workbook()
     ws_accounts = wb.active
     ws_accounts.title = "Kode Akun"
@@ -346,11 +370,17 @@ async def export_master_data(group: str = Query("BUMDES"), _: dict = Depends(req
         ws_accounts.append([account.get(k, "") for k in ("code", "name", "category", "subcategory", "normal_balance", "group")])
     for tx_type in await db.transaction_types.select({"group": group}, {"_id": 0}).order("code", 1).all(10000):
         ws_types.append([tx_type.get(k, "") for k in ("code", "name", "debit", "credit", "group")])
+    if section == "accounts":
+        del wb["Jenis Transaksi"]
+    elif section == "transaction-types":
+        del wb["Kode Akun"]
+        wb.active = wb["Jenis Transaksi"]
     buf = _io.BytesIO()
     wb.save(buf)
     buf.seek(0)
+    filename = f'Master-Data-{"Kode-Akun" if section == "accounts" else "Jenis-Transaksi" if section == "transaction-types" else "Lengkap"}-{group}.xlsx'
     return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                             headers={"Content-Disposition": f'attachment; filename="Master-Data-{group}.xlsx"'})
+                             headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
 @router.delete("/accounts/reset-all")
 async def reset_all_accounts(confirm: str = "", _: dict = Depends(require_roles(*ADMIN_LEVEL))):
