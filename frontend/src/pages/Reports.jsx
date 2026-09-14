@@ -206,6 +206,28 @@ export default function Reports() {
         </>
       )}
 
+      {tab === "kinerja" && (
+        <div className="card">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+            <div>
+              <label className="label" htmlFor="performance-month">Bulan</label>
+              <select id="performance-month" data-testid="performance-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setKinerja(null); }}>
+                {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label" htmlFor="performance-year">Tahun</label>
+              <select id="performance-year" data-testid="performance-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setKinerja(null); }}>
+                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
+            <button data-testid="btn-load-performance" onClick={load} className="btn btn-primary">
+              {loading ? "Memuat..." : "Tampilkan Laporan"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {tab === "kinerja" && kinerja && (
         <>
           {/* ==== Tabel Kinerja BUMDES ==== */}
