@@ -208,7 +208,7 @@ export default function Dashboard() {
           {jabatan}, ini ringkasan data BUMDES.
         </h1>
         <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>
-          BUMDES Karya Raharja • Desa Wonoharjo • {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          BUMDES Karya Raharja • {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 

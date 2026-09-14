@@ -35,9 +35,13 @@ export default function Reports() {
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState(currentMonth);
   const [periodMode, setPeriodMode] = useState("monthly");
+  const [customPreset, setCustomPreset] = useState("ytd");
+  const [customStart, setCustomStart] = useState(`${currentYear}-01-01`);
+  const [customEnd, setCustomEnd] = useState(new Date().toISOString().slice(0, 10));
   const { start: monthlyStart, end: monthlyEnd } = monthRange(year, month);
-  const start = periodMode === "yearly" ? `${year}-01-01` : monthlyStart;
-  const end = periodMode === "yearly" ? `${year}-12-31` : monthlyEnd;
+  const customRange = customPreset === "ytd" ? [`${year}-01-01`, new Date().toISOString().slice(0, 10)] : customPreset === "qtd" ? [`${year}-${String(Math.floor((month - 1) / 3) * 3 + 1).padStart(2, "0")}-01`, new Date().toISOString().slice(0, 10)] : customPreset === "mtd" ? [`${year}-${String(month).padStart(2, "0")}-01`, new Date().toISOString().slice(0, 10)] : [customStart, customEnd];
+  const start = periodMode === "yearly" ? `${year}-01-01` : periodMode === "custom" ? customRange[0] : monthlyStart;
+  const end = periodMode === "yearly" ? `${year}-12-31` : periodMode === "custom" ? customRange[1] : monthlyEnd;
   // tab: laporan | kinerja
   const [tab, setTab] = useState("laporan");
   const [active, setActive] = useState("laba-rugi");
@@ -194,7 +198,12 @@ export default function Reports() {
                 <select id="report-period-mode" data-testid="report-period-mode" className="select" value={periodMode} onChange={(e) => { setPeriodMode(e.target.value); setData(null); setKinerja(null); }}>
                   <option value="monthly">Bulanan</option>
                   <option value="yearly">Tahunan</option>
+                  <option value="custom">Custom</option>
                 </select>
+                {periodMode === "custom" && <>
+                  <select className="select mt-2" value={customPreset} onChange={(e) => setCustomPreset(e.target.value)}><option value="ytd">Year to Date</option><option value="qtd">Quarter to Date</option><option value="mtd">Month to Date</option><option value="dates">Pilih tanggal</option></select>
+                  {customPreset === "dates" && <div className="grid grid-cols-2 gap-2 mt-2"><input className="input" type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} /><input className="input" type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} /></div>}
+                </>}
               </div>
               {periodMode === "monthly" && <div>
                 <label className="label" htmlFor="report-month">Bulan</label>
