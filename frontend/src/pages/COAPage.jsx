@@ -41,7 +41,8 @@ export default function COAPage() {
   const [list, setList] = useState([]);
   const [types, setTypes] = useState([]);
   const [units, setUnits] = useState([]);
-  const [group, setGroup] = useState("BUMDES"); // active tab: BUMDES | UU01..UU06
+  const [group, setGroup] = useState("BUMDES");
+  const [activeSection, setActiveSection] = useState("accounts");
 
   const [filter, setFilter] = useState(""); // category filter (aset/kewajiban/...)
 
@@ -94,6 +95,18 @@ export default function COAPage() {
     } finally {
       e.target.value = "";
     }
+  };
+
+  const exportMasterData = async () => {
+    try {
+      const res = await fetch(`${API}/master-data/export?group=${encodeURIComponent(group)}`, { credentials: "include" });
+      if (!res.ok) { notify("Gagal export master data"); return; }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `Master-Data-${group}.xlsx`; a.click();
+      URL.revokeObjectURL(url);
+    } catch (er) { notify(er.message || "Gagal export"); }
   };
 
   const resetAll = async () => {
@@ -248,45 +261,33 @@ export default function COAPage() {
         </div>
       </div>
 
-      {/* Tabs: 7 kelompok */}
-      <div className="card card-sm" data-testid="group-tabs">
-        <label className="label mb-2">Kelompok</label>
-        <div className="flex flex-wrap gap-2">
-          {groupTabs.map(g => (
-            <button key={g.key} data-testid={`tab-${g.key}`}
-                    onClick={() => { setGroup(g.key); setFilter(""); }}
-                    className={`btn text-sm ${group === g.key ? "btn-primary" : "btn-outline"}`}>
-              {g.label}
-              <span className="text-xs opacity-70 ml-1">· {g.sub}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Toolbar: Template/Import/Reset (admin only) */}
       {isAdmin && (
-        <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="coa-toolbar">
-          <div className="flex-1 min-w-0">
-            <p className="label mb-1">Aksi Massal Kode Akun</p>
-            <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-              Gunakan template Excel untuk import banyak akun sekaligus. Fungsi akun ditentukan dari kolom category & subcategory.
-            </p>
+        <div className="space-y-3" data-testid="master-data-controls">
+          <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="coa-toolbar">
+            <div className="w-full">
+              <p className="label mb-1">Aksi Master Data</p>
+              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Kelola dan pindahkan master data per kelompok melalui file Excel.</p>
+            </div>
+            <button data-testid="btn-download-template" onClick={downloadTemplate} className="btn btn-outline"><DownloadSimple size={16} weight="duotone" color="#2E4F7C" /> Download Template</button>
+            <button data-testid="btn-import-coa" onClick={() => fileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} weight="duotone" color="#3A5A7D" /> Import Excel</button>
+            <button data-testid="btn-export-master" onClick={exportMasterData} className="btn btn-outline"><DownloadSimple size={16} weight="duotone" color="#2E4F7C" /> Export Excel</button>
+            <button data-testid="btn-reset-coa" onClick={resetAll} className="btn" style={{ background: "#D97878", color: "white" }}><Warning size={16} weight="fill" /> Reset Semua Akun</button>
+            <input ref={fileRef} type="file" accept=".xlsx" onChange={importFile} data-testid="coa-file-input" style={{ display: "none" }} />
           </div>
-          <button data-testid="btn-download-template" onClick={downloadTemplate} className="btn btn-outline">
-            <DownloadSimple size={16} weight="duotone" color="#2E4F7C" /> Download Template
-          </button>
-          <button data-testid="btn-import-coa" onClick={() => fileRef.current?.click()} className="btn btn-outline">
-            <UploadSimple size={16} weight="duotone" color="#3A5A7D" /> Import Excel
-          </button>
-          <button data-testid="btn-reset-coa" onClick={resetAll} className="btn"
-                  style={{ background: "#D97878", color: "white" }}>
-            <Warning size={16} weight="fill" /> Reset Semua Akun
-          </button>
-          <input ref={fileRef} type="file" accept=".xlsx" onChange={importFile}
-                 data-testid="coa-file-input" style={{ display: "none" }} />
+          <div className="card card-sm">
+            <label className="label mb-2" htmlFor="master-group-select">Kelompok</label>
+            <select id="master-group-select" data-testid="master-group-select" className="select" value={group} onChange={(e) => { setGroup(e.target.value); setFilter(""); }}>
+              {groupTabs.map(g => <option key={g.key} value={g.key}>{g.key === "BUMDES" ? "BUMDES - Pusat" : `${g.label} - ${g.sub}`}</option>)}
+            </select>
+          </div>
+          <div className="card card-sm flex flex-wrap gap-2" data-testid="master-type-tabs">
+            <button data-testid="tab-accounts" onClick={() => setActiveSection("accounts")} className={`btn ${activeSection === "accounts" ? "btn-primary" : "btn-outline"}`}>Kode Akun</button>
+            <button data-testid="tab-transaction-types" onClick={() => setActiveSection("transaction-types")} className={`btn ${activeSection === "transaction-types" ? "btn-primary" : "btn-outline"}`}>Jenis Transaksi</button>
+          </div>
         </div>
       )}
 
+      {activeSection === "accounts" && <>
       {/* ============ KODE AKUN ============ */}
       <div className="flex justify-between items-center gap-4 flex-wrap pt-2">
         <div>
@@ -457,6 +458,9 @@ export default function COAPage() {
         </table>
       </div>
 
+      </>}
+
+      {activeSection === "transaction-types" && <>
       {/* ============ JENIS TRANSAKSI ============ */}
       {/* Duplikasi tab selector di atas tabel Jenis Transaksi */}
       <div className="card card-sm" data-testid="tt-group-tabs">
@@ -595,6 +599,7 @@ export default function COAPage() {
           </tbody>
         </table>
       </div>
+      </>}
     </div>
   );
 }

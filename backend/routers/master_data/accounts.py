@@ -291,6 +291,37 @@ async def import_accounts(file: UploadFile = File(...), _: dict = Depends(requir
 
     return {"inserted": inserted, "skipped": skipped, "errors": errors[:50]}
 
+@router.get("/master-data/export")
+async def export_master_data(group: str = Query("BUMDES"), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
+    """Export akun dan jenis transaksi untuk satu kelompok terpilih."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill
+    import io as _io
+
+    valid_groups = {"BUMDES", "UU01", "UU02", "UU03", "UU04", "UU05", "UU06"}
+    if group not in valid_groups:
+        raise HTTPException(400, "Kelompok tidak valid")
+    wb = Workbook()
+    ws_accounts = wb.active
+    ws_accounts.title = "Kode Akun"
+    ws_accounts.append(["code", "name", "category", "subcategory", "normal_balance", "group"])
+    ws_types = wb.create_sheet("Jenis Transaksi")
+    ws_types.append(["code", "name", "debit", "credit", "group"])
+    for ws in (ws_accounts, ws_types):
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="2E4F32")
+        ws.freeze_panes = "A2"
+    for account in await db.accounts.select({"group": group}, {"_id": 0}).order("code", 1).all(10000):
+        ws_accounts.append([account.get(k, "") for k in ("code", "name", "category", "subcategory", "normal_balance", "group")])
+    for tx_type in await db.transaction_types.select({"group": group}, {"_id": 0}).order("code", 1).all(10000):
+        ws_types.append([tx_type.get(k, "") for k in ("code", "name", "debit", "credit", "group")])
+    buf = _io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                             headers={"Content-Disposition": f'attachment; filename="Master-Data-{group}.xlsx"'})
+
 @router.delete("/accounts/reset-all")
 async def reset_all_accounts(confirm: str = "", _: dict = Depends(require_roles(*ADMIN_LEVEL))):
     """Hapus SEMUA kode akun (butuh confirm=YES). Transaksi tidak dihapus."""
