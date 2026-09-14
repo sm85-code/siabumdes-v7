@@ -4,7 +4,7 @@ import Layout from "@/components/Layout.jsx";
 import Login from "@/pages/Login.jsx";
 import DashboardStok from "@/pages/DashboardStok.jsx";
 import Products from "@/pages/Products.jsx";
-import Mutasi from "@/pages/Mutasi.jsx";
+import StockLogs from "@/pages/StockLogs.jsx";
 
 export default function App() {
   return (
@@ -18,7 +18,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<DashboardStok />} />
             <Route path="/produk" element={<Products />} />
-            <Route path="/mutasi" element={<Mutasi />} />
+            <Route path="/mutasi" element={<StockLogs />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
