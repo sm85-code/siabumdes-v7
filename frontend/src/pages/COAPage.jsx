@@ -98,9 +98,9 @@ export default function COAPage() {
     }
   };
 
-  const exportMasterData = async () => {
+  const exportMasterData = async (section) => {
     try {
-      const res = await fetch(`${API}/master-data/export?group=${encodeURIComponent(group)}`, { credentials: "include" });
+      const res = await fetch(`${API}/master-data/export?group=${encodeURIComponent(group)}&section=${section}`, { credentials: "include" });
       if (!res.ok) { notify("Gagal export master data"); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -282,6 +282,7 @@ export default function COAPage() {
       <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="account-toolbar">
         <button data-testid="btn-download-account-template" onClick={() => downloadTemplate("accounts")} className="btn btn-outline"><DownloadSimple size={16} /> Download Template</button>
         <button data-testid="btn-import-account" onClick={() => accountFileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} /> Import Excel</button>
+        <button data-testid="btn-export-account" onClick={() => exportMasterData("accounts")} className="btn btn-outline"><DownloadSimple size={16} /> Export Excel</button>
         <input ref={accountFileRef} type="file" accept=".xlsx" onChange={(e) => importFile(e, "accounts")} hidden />
       </div>
       <div className="flex justify-between items-center gap-4 flex-wrap pt-2">
@@ -460,6 +461,7 @@ export default function COAPage() {
       <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="transaction-toolbar">
         <button data-testid="btn-download-transaction-template" onClick={() => downloadTemplate("transaction-types")} className="btn btn-outline"><DownloadSimple size={16} /> Download Template</button>
         <button data-testid="btn-import-transaction" onClick={() => transactionFileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} /> Import Excel</button>
+        <button data-testid="btn-export-transaction" onClick={() => exportMasterData("transaction-types")} className="btn btn-outline"><DownloadSimple size={16} /> Export Excel</button>
         <input ref={transactionFileRef} type="file" accept=".xlsx" onChange={(e) => importFile(e, "transaction-types")} hidden />
       </div>
       <div className="flex justify-between items-center gap-4 flex-wrap pt-4">
