@@ -1,0 +1,167 @@
+"""Endpoint inventory Unit Toko Offline (UU05).
+
+Router ini menggunakan Async SQLAlchemy dan transaksi database atomik. Data
+keuangan mingguan ditulis ke application_entities dengan bentuk yang sama
+seperti koleksi transactions lama, sehingga tidak mengubah tabel keuangan inti.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Literal
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.orm import joinedload
+
+from database import SessionLocal, StoredEntity
+from models import Produk, StokKeluar, StokMasuk
+from services.jwt_service import get_current_user_payload
+from dependencies import user_from_payload
+
+router = APIRouter(prefix="/api/stok", tags=["Stok"])
+UNIT_ID = "UU05"
+ALLOWED_ROLES = {"admin", "direktur", "bendahara"}
+
+
+async def require_stok_access(payload: dict = Depends(get_current_user_payload)) -> dict:
+    """Require an active session and restrict pengelola to unit UU05."""
+    user = await user_from_payload(payload)
+    if user.role not in ALLOWED_ROLES and not (
+        user.role == "pengelola" and user.unit_usaha_id == UNIT_ID
+    ):
+        raise HTTPException(status_code=403, detail="Anda tidak memiliki akses ke modul stok UU05")
+    if user.must_change_password:
+        raise HTTPException(status_code=403, detail="PASSWORD_CHANGE_REQUIRED")
+    return payload
+
+
+class ProdukInput(BaseModel):
+    sku: str = Field(min_length=1, max_length=100)
+    nama_produk: str = Field(min_length=1, max_length=255)
+    kategori: str = Field(min_length=1, max_length=100)
+    satuan: str = Field(min_length=1, max_length=20)
+    harga_beli: int = Field(ge=0)
+    harga_jual: int = Field(ge=0)
+
+
+class StokMasukInput(BaseModel):
+    produk_id: int = Field(gt=0)
+    jumlah: int = Field(gt=0)
+    harga_beli_satuan: int = Field(ge=0)
+
+
+class StokKeluarInput(BaseModel):
+    produk_id: int = Field(gt=0)
+    jumlah: int = Field(gt=0)
+    tipe_keluar: Literal["penjualan", "rusak", "kadaluarsa"]
+    keterangan: str | None = Field(default=None, max_length=500)
+
+
+def produk_response(item: Produk) -> dict:
+    return {
+        "id": item.id,
+        "sku": item.sku,
+        "nama_produk": item.nama_produk,
+        "kategori": item.kategori,
+        "stok_saat_ini": item.stok_saat_ini,
+        "satuan": item.satuan,
+        "harga_beli": item.harga_beli,
+        "harga_jual": item.harga_jual,
+        "unit_id": item.unit_id,
+    }
+
+
+@router.post("/produk", status_code=status.HTTP_201_CREATED)
+async def buat_produk(data: ProdukInput, _: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        exists = await session.scalar(select(Produk).where(Produk.sku == data.sku, Produk.unit_id == UNIT_ID))
+        if exists:
+            raise HTTPException(status_code=409, detail="SKU sudah digunakan pada unit UU05")
+        item = Produk(**data.model_dump(), unit_id=UNIT_ID)
+        session.add(item)
+        await session.commit()
+        await session.refresh(item)
+        return produk_response(item)
+
+
+@router.get("/produk")
+async def daftar_produk(_: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Produk).where(Produk.unit_id == UNIT_ID).order_by(Produk.nama_produk))
+        return [produk_response(item) for item in result.all()]
+
+
+@router.post("/masuk", status_code=status.HTTP_201_CREATED)
+async def catat_stok_masuk(data: StokMasukInput, _: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        async with session.begin():
+            product = await session.scalar(select(Produk).where(Produk.id == data.produk_id, Produk.unit_id == UNIT_ID).with_for_update())
+            if not product:
+                raise HTTPException(status_code=404, detail="Produk UU05 tidak ditemukan")
+            total = data.jumlah * data.harga_beli_satuan
+            item = StokMasuk(
+                produk_id=product.id,
+                jumlah=data.jumlah,
+                harga_beli_satuan=data.harga_beli_satuan,
+                total_biaya=total,
+                status_keuangan="belum_sinkron",
+                unit_id=UNIT_ID,
+            )
+            product.stok_saat_ini += data.jumlah
+            session.add(item)
+        await session.refresh(item)
+        return {"pesan": "Stok masuk berhasil dicatat", "id": item.id, "total_biaya": total, "status_keuangan": item.status_keuangan}
+
+
+@router.post("/keluar", status_code=status.HTTP_201_CREATED)
+async def catat_stok_keluar(data: StokKeluarInput, _: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        async with session.begin():
+            product = await session.scalar(select(Produk).where(Produk.id == data.produk_id, Produk.unit_id == UNIT_ID).with_for_update())
+            if not product:
+                raise HTTPException(status_code=404, detail="Produk UU05 tidak ditemukan")
+            if product.stok_saat_ini < data.jumlah:
+                raise HTTPException(status_code=422, detail="Stok tidak mencukupi")
+            item = StokKeluar(produk_id=product.id, unit_id=UNIT_ID, **data.model_dump())
+            product.stok_saat_ini -= data.jumlah
+            session.add(item)
+        await session.refresh(item)
+        return {"pesan": "Stok keluar berhasil dicatat", "id": item.id, "stok_saat_ini": product.stok_saat_ini}
+
+
+@router.post("/masuk/sinkronisasi-mingguan")
+async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        async with session.begin():
+            items = list((await session.scalars(select(StokMasuk).where(StokMasuk.status_keuangan == "belum_sinkron", StokMasuk.unit_id == UNIT_ID).with_for_update())).all())
+            total = sum(abs(item.total_biaya) for item in items)
+            if not items:
+                return {"pesan": "Tidak ada stok masuk yang perlu disinkronkan", "jumlah_item": 0, "total_biaya": 0}
+
+            # PLACEHOLDER INTEGRASI LEDGER:
+            # Jika model SQLAlchemy TransaksiKeuangan tersedia, import dan buat
+            # satu row: jenis_transaksi="PENGELUARAN", kategori=..., nominal=total,
+            # unit_id="UU05". Pada repo saat ini transaksi lama disimpan sebagai
+            # StoredEntity; baris berikut mempertahankan format tersebut dan ikut
+            # transaksi SQLAlchemy yang sama (commit atomik).
+            ledger = StoredEntity(
+                namespace="transactions",
+                id=str(uuid4()),
+                payload={
+                    "date": datetime.now(timezone.utc).date().isoformat(),
+                    "unit_usaha_id": UNIT_ID,
+                    "transaction_type": "PENGELUARAN",
+                    "description": "Pembelian Stok Persediaan (Mingguan)",
+                    "amount": total,
+                    "debit_account_code": "1-1400",
+                    "credit_account_code": "1-1100",
+                    "reference": "sinkronisasi-stok-mingguan",
+                    "created_by": "sistem-stok",
+                },
+            )
+            session.add(ledger)
+            for item in items:
+                item.status_keuangan = "terkirim"
+            return {"pesan": "Rekap stok berhasil terbuku di keuangan", "jumlah_item": len(items), "total_biaya": total, "status_keuangan": "terkirim"}
