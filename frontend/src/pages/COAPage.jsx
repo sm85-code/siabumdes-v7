@@ -55,32 +55,33 @@ export default function COAPage() {
   const [editTTCode, setEditTTCode] = useState(null);
   const [ttForm, setTtForm] = useState(emptyTT);
   const [ttErr, setTtErr] = useState("");
-  const fileRef = useRef(null);
+  const accountFileRef = useRef(null);
+  const transactionFileRef = useRef(null);
 
-  const downloadTemplate = async () => {
+  const downloadTemplate = async (section) => {
     try {
-      const res = await fetch(`${API}/accounts/template`, {
-        credentials: "include",
-      });
+      const isTransactions = section === "transaction-types";
+      const res = await fetch(`${API}/${isTransactions ? "transaction-types/template" : "accounts/template"}`, { credentials: "include" });
       if (!res.ok) { notify("Gagal mengunduh template"); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "Template-Kode-Akun.xlsx"; a.click();
+      a.href = url; a.download = section === "transaction-types" ? "Template-Jenis-Transaksi.xlsx" : "Template-Kode-Akun.xlsx"; a.click();
       URL.revokeObjectURL(url);
     } catch (er) { notify(er.message || "Gagal"); }
   };
 
-  const importFile = async (e) => {
+  const importFile = async (e, section) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!(await confirm({ title: "Import chart of accounts", description: `Import file "${file.name}"? Baris duplikat akan dilewati.`, confirmLabel: "Import" }))) {
+    const isTransactions = section === "transaction-types";
+    if (!(await confirm({ title: isTransactions ? "Import jenis transaksi" : "Import chart of accounts", description: `Import file "${file.name}"? Baris duplikat akan dilewati.`, confirmLabel: "Import" }))) {
       e.target.value = ""; return;
     }
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const r = await api.post("/accounts/import", fd, {
+      const r = await api.post(isTransactions ? "/transaction-types/import" : "/accounts/import", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       const { inserted, skipped, errors } = r.data;
@@ -263,17 +264,6 @@ export default function COAPage() {
 
       {isAdmin && (
         <div className="space-y-3" data-testid="master-data-controls">
-          <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="coa-toolbar">
-            <div className="w-full">
-              <p className="label mb-1">Aksi Master Data</p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Kelola dan pindahkan master data per kelompok melalui file Excel.</p>
-            </div>
-            <button data-testid="btn-download-template" onClick={downloadTemplate} className="btn btn-outline"><DownloadSimple size={16} weight="duotone" color="#2E4F7C" /> Download Template</button>
-            <button data-testid="btn-import-coa" onClick={() => fileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} weight="duotone" color="#3A5A7D" /> Import Excel</button>
-            <button data-testid="btn-export-master" onClick={exportMasterData} className="btn btn-outline"><DownloadSimple size={16} weight="duotone" color="#2E4F7C" /> Export Excel</button>
-            <button data-testid="btn-reset-coa" onClick={resetAll} className="btn" style={{ background: "#D97878", color: "white" }}><Warning size={16} weight="fill" /> Reset Semua Akun</button>
-            <input ref={fileRef} type="file" accept=".xlsx" onChange={importFile} data-testid="coa-file-input" style={{ display: "none" }} />
-          </div>
           <div className="card card-sm">
             <label className="label mb-2" htmlFor="master-group-select">Kelompok</label>
             <select id="master-group-select" data-testid="master-group-select" className="select" value={group} onChange={(e) => { setGroup(e.target.value); setFilter(""); }}>
@@ -289,6 +279,11 @@ export default function COAPage() {
 
       {activeSection === "accounts" && <>
       {/* ============ KODE AKUN ============ */}
+      <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="account-toolbar">
+        <button data-testid="btn-download-account-template" onClick={() => downloadTemplate("accounts")} className="btn btn-outline"><DownloadSimple size={16} /> Download Template</button>
+        <button data-testid="btn-import-account" onClick={() => accountFileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} /> Import Excel</button>
+        <input ref={accountFileRef} type="file" accept=".xlsx" onChange={(e) => importFile(e, "accounts")} hidden />
+      </div>
       <div className="flex justify-between items-center gap-4 flex-wrap pt-2">
         <div>
           <h2 className="font-heading text-2xl font-bold">Kode Akun — {groupLabel}</h2>
@@ -462,6 +457,11 @@ export default function COAPage() {
 
       {activeSection === "transaction-types" && <>
       {/* ============ JENIS TRANSAKSI ============ */}
+      <div className="card card-sm flex flex-wrap items-center gap-2" data-testid="transaction-toolbar">
+        <button data-testid="btn-download-transaction-template" onClick={() => downloadTemplate("transaction-types")} className="btn btn-outline"><DownloadSimple size={16} /> Download Template</button>
+        <button data-testid="btn-import-transaction" onClick={() => transactionFileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} /> Import Excel</button>
+        <input ref={transactionFileRef} type="file" accept=".xlsx" onChange={(e) => importFile(e, "transaction-types")} hidden />
+      </div>}
       <div className="flex justify-between items-center gap-4 flex-wrap pt-4">
         <div>
           <h2 className="font-heading text-2xl font-bold">Jenis Transaksi — {groupLabel}</h2>

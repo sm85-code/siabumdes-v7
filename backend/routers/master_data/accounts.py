@@ -291,6 +291,36 @@ async def import_accounts(file: UploadFile = File(...), _: dict = Depends(requir
 
     return {"inserted": inserted, "skipped": skipped, "errors": errors[:50]}
 
+@router.post("/transaction-types/import")
+async def import_transaction_types(file: UploadFile = File(...), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
+    from openpyxl import load_workbook
+    content = await file.read()
+    ws = load_workbook(filename=__import__("io").BytesIO(content), read_only=True, data_only=True).active
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows: raise HTTPException(400, "File kosong")
+    headers = [str(v or "").strip().lower() for v in rows[0]]
+    required = {"code", "name", "debit", "credit"}
+    if not required.issubset(headers): raise HTTPException(400, "Kolom wajib: code, name, debit, credit")
+    inserted = skipped = 0
+    for values in rows[1:]:
+        item = dict(zip(headers, values))
+        if not item.get("code") or not item.get("name"): continue
+        if await db.transaction_types.select_one({"code": str(item["code"])}): skipped += 1; continue
+        await db.transaction_types.create({"code": str(item["code"]), "name": str(item["name"]), "debit": str(item.get("debit") or ""), "credit": str(item.get("credit") or ""), "group": str(item.get("group") or "BUMDES")})
+        inserted += 1
+    return {"inserted": inserted, "skipped": skipped, "errors": []}
+
+@router.get("/transaction-types/template")
+async def transaction_types_template(_: dict = Depends(require_roles(*ADMIN_LEVEL))):
+    from openpyxl import Workbook
+    import io as _io
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Jenis Transaksi"
+    ws.append(["code", "name", "debit", "credit", "group"])
+    buf = _io.BytesIO(); wb.save(buf); buf.seek(0)
+    return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", headers={"Content-Disposition": 'attachment; filename="Template-Jenis-Transaksi.xlsx"'})
+
 @router.get("/master-data/export")
 async def export_master_data(group: str = Query("BUMDES"), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
     """Export akun dan jenis transaksi untuk satu kelompok terpilih."""
