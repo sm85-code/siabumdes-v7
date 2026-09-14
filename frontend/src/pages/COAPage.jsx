@@ -461,7 +461,7 @@ export default function COAPage() {
         <button data-testid="btn-download-transaction-template" onClick={() => downloadTemplate("transaction-types")} className="btn btn-outline"><DownloadSimple size={16} /> Download Template</button>
         <button data-testid="btn-import-transaction" onClick={() => transactionFileRef.current?.click()} className="btn btn-outline"><UploadSimple size={16} /> Import Excel</button>
         <input ref={transactionFileRef} type="file" accept=".xlsx" onChange={(e) => importFile(e, "transaction-types")} hidden />
-      </div>}
+      </div>
       <div className="flex justify-between items-center gap-4 flex-wrap pt-4">
         <div>
           <h2 className="font-heading text-2xl font-bold">Jenis Transaksi — {groupLabel}</h2>
