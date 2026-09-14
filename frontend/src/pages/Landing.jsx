@@ -186,7 +186,7 @@ export default function Landing() {
               &rdquo;
             </span>
             <div
-              className="relative font-body text-sm sm:text-base leading-relaxed text-left sm:text-justify space-y-3.5 tracking-[-0.01em]"
+              className="relative font-body text-sm sm:text-base leading-relaxed text-justify space-y-3.5 tracking-[-0.01em]"
               style={{ color: "var(--text-secondary)" }}
             >
               <p>
