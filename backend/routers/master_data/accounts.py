@@ -311,10 +311,16 @@ async def import_transaction_types(file: UploadFile = File(...), _: dict = Depen
     return {"inserted": inserted, "skipped": skipped, "errors": []}
 
 @router.get("/transaction-types/template")
-async def transaction_types_template(_: dict = Depends(require_roles(*ADMIN_LEVEL))):
+async def transaction_types_template(group: str = Query("BUMDES"), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     import io as _io
+    valid_groups = {"BUMDES", "UU01", "UU02", "UU03", "UU04", "UU05", "UU06"}
+    if group not in valid_groups:
+        raise HTTPException(400, "Kelompok tidak valid")
+    active_accounts = await db.accounts.select({"group": group}, {"_id": 0}).order("code", 1).all(10000)
+    if not active_accounts:
+        raise HTTPException(400, f"Belum ada kode akun aktif untuk kelompok {group}")
     wb = Workbook()
     instructions = wb.active
     instructions.title = "Instruksi"
@@ -325,15 +331,30 @@ async def transaction_types_template(_: dict = Depends(require_roles(*ADMIN_LEVE
     instructions.append(["4. Kolom debit dan credit berisi kode akun dari kelompok yang dipilih."])
     instructions.append(["5. Kolom group diisi BUMDES atau kode unit UU01 sampai UU06."])
     instructions.append(["6. Jangan mengubah nama kolom dan hapus baris contoh sebelum import."])
-    instructions.column_dimensions["A"].width = 110
+    instructions.append([""])
+    instructions.append([f"REFERENSI KODE AKUN AKTIF DAN VALID - KELOMPOK {group}"])
+    instructions.append(["Gunakan kode akun pada daftar berikut untuk kolom debit dan credit."])
+    instructions.append(["Kode Akun", "Nama Akun"])
+    for account in active_accounts:
+        instructions.append([account.get("code", ""), account.get("name", "")])
+    instructions.column_dimensions["A"].width = 28
+    instructions.column_dimensions["B"].width = 48
     for cell in instructions[1]:
         cell.font = Font(bold=True, color="FFFFFF", size=14)
+        cell.fill = PatternFill("solid", fgColor="2E4F32")
+    for cell in instructions[9]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = PatternFill("solid", fgColor="2E4F32")
+    for cell in instructions[11]:
+        cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill("solid", fgColor="2E4F32")
     for row in instructions.iter_rows():
         for cell in row: cell.alignment = Alignment(wrap_text=True, vertical="top")
     ws = wb.create_sheet("Jenis Transaksi")
     ws.append(["code", "name", "debit", "credit", "group"])
-    ws.append(["penjualan_kios", "Penjualan Kios", "4-1100", "4-4100", "BUMDES"])
+    debit_account = next((a for a in active_accounts if a.get("normal_balance") == "debit"), active_accounts[0])
+    credit_account = next((a for a in active_accounts if a.get("normal_balance") == "kredit"), active_accounts[-1])
+    ws.append(["contoh_transaksi", "Contoh Transaksi", debit_account.get("code", ""), credit_account.get("code", ""), group])
     for cell in ws[1]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill("solid", fgColor="2E4F32")

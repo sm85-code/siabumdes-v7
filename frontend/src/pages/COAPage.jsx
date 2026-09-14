@@ -61,7 +61,8 @@ export default function COAPage() {
   const downloadTemplate = async (section) => {
     try {
       const isTransactions = section === "transaction-types";
-      const res = await fetch(`${API}/${isTransactions ? "transaction-types/template" : "accounts/template"}`, { credentials: "include" });
+      const templatePath = isTransactions ? "transaction-types/template" : "accounts/template";
+      const res = await fetch(`${API}/${templatePath}?group=${encodeURIComponent(group)}`, { credentials: "include" });
       if (!res.ok) { notify("Gagal mengunduh template"); return; }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
