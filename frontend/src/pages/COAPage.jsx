@@ -244,7 +244,7 @@ export default function COAPage() {
   };
 
   const groupTabs = useMemo(() => {
-    const tabs = [{ key: "BUMDES", label: "BUMDES", sub: "Umum" }];
+    const tabs = [{ key: "BUMDES", label: "BUMDES", sub: "Pusat" }];
     units.forEach(u => tabs.push({ key: u.code, label: u.code, sub: u.name }));
     return tabs;
   }, [units]);

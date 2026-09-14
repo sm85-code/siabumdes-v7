@@ -119,6 +119,12 @@ export default function Transactions() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [periodMode, setPeriodMode] = useState("monthly");
+  const [customPreset, setCustomPreset] = useState("ytd");
+  const [customStart, setCustomStart] = useState(`${new Date().getFullYear()}-01-01`);
+  const [customEnd, setCustomEnd] = useState(new Date().toISOString().slice(0, 10));
+  const [customPreset, setCustomPreset] = useState("ytd");
+  const [customStart, setCustomStart] = useState(`${new Date().getFullYear()}-01-01`);
+  const [customEnd, setCustomEnd] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState(new Set());
 
   const load = useCallback(async () => {
@@ -314,14 +320,16 @@ export default function Transactions() {
   }, [activeGroup, units]);
 
   const monthPrefix = `${year}-${pad(month)}`;
+  const customStartDate = customPreset === "ytd" ? `${year}-01-01` : customPreset === "qtd" ? `${year}-${pad(Math.floor((month - 1) / 3) * 3 + 1)}-01` : customPreset === "mtd" ? `${year}-${pad(month)}-01` : customStart;
+  const customEndDate = customPreset === "ytd" || customPreset === "qtd" || customPreset === "mtd" ? new Date().toISOString().slice(0, 10) : customEnd;
   const yearPrefix = `${year}-`;
   const filteredTxs = useMemo(() => {
   return txs.filter(t => {
   const inGroup = activeGroup === "BUMDES" ? !t.unit_usaha_id : t.unit_usaha_id === activeUnitId;
-  const inPeriod = periodMode === "yearly" ? (t.date || "").startsWith(yearPrefix) : (t.date || "").startsWith(monthPrefix);
+  const inPeriod = periodMode === "yearly" ? (t.date || "").startsWith(yearPrefix) : periodMode === "custom" ? (t.date || "") >= customStartDate && (t.date || "") <= customEndDate : (t.date || "").startsWith(monthPrefix);
   return inGroup && inPeriod;
   });
-  }, [txs, activeGroup, activeUnitId, monthPrefix, yearPrefix, periodMode]);
+  }, [txs, activeGroup, activeUnitId, monthPrefix, yearPrefix, periodMode, customStartDate, customEndDate]);
 
   const sortState = useSort(filteredTxs, "date", "desc");
 
@@ -343,9 +351,9 @@ const proceed = await confirm({
   });
   if (!proceed) return;
     }
-  const first = periodMode === "yearly" ? `${year}-01-01` : `${year}-${pad(month)}-01`;
+  const first = periodMode === "yearly" ? `${year}-01-01` : periodMode === "custom" ? customStartDate : `${year}-${pad(month)}-01`;
   // Use local-date components (avoid toISOString UTC-shift bug)
-  const jsLast = periodMode === "yearly" ? new Date(year, 12, 0) : new Date(year, month, 0);
+  const jsLast = periodMode === "yearly" ? new Date(year, 12, 0) : periodMode === "custom" ? new Date(`${customEndDate}T00:00:00`) : new Date(year, month, 0);
     const last = `${jsLast.getFullYear()}-${pad(jsLast.getMonth() + 1)}-${pad(jsLast.getDate())}`;
     const params = new URLSearchParams({ start_date: first, end_date: last });
     if (activeGroup === "BUMDES") params.set("unit_usaha_id", "");
@@ -356,7 +364,7 @@ const proceed = await confirm({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Transaksi_${activeGroup}_${monthPrefix}.xlsx`;
+    a.download = `Transaksi_${activeGroup}_${first}_sd_${last}.xlsx`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -551,7 +559,14 @@ if (!(await confirm({
   <select id="tx-period-mode" data-testid="tx-period-mode" className="select" value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}>
   <option value="monthly">Bulanan</option>
   <option value="yearly">Tahunan</option>
+  <option value="custom">Custom</option>
   </select>
+  {periodMode === "custom" && <>
+  <select className="select mt-2" value={customPreset} onChange={(e) => setCustomPreset(e.target.value)}>
+    <option value="ytd">Year to Date</option><option value="qtd">Quarter to Date</option><option value="mtd">Month to Date</option><option value="dates">Pilih tanggal</option>
+  </select>
+  {customPreset === "dates" && <div className="grid grid-cols-2 gap-2 mt-2"><input className="input" type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} /><input className="input" type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} /></div>}
+  </div>}
   </div>
   {periodMode === "monthly" && <div>
   <label className="label" htmlFor="tx-month">Bulan</label>
