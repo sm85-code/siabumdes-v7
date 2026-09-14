@@ -20,9 +20,10 @@ export default function BukuBesar() {
   const [search, setSearch] = useState("");
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const startDate = `${year}-${pad(month)}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
-  const endDate = `${year}-${pad(month)}-${pad(lastDay)}`;
+  const [periodMode, setPeriodMode] = useState("monthly");
+  const startDate = periodMode === "yearly" ? `${year}-01-01` : `${year}-${pad(month)}-01`;
+  const lastDay = periodMode === "yearly" ? new Date(year, 12, 0).getDate() : new Date(year, month, 0).getDate();
+  const endDate = periodMode === "yearly" ? `${year}-12-31` : `${year}-${pad(month)}-${pad(lastDay)}`;
   const [ledger, setLedger] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -121,12 +122,19 @@ export default function BukuBesar() {
           </select>
         </div>
         <div>
+          <label className="label" htmlFor="ledger-period-mode">Periode</label>
+          <select id="ledger-period-mode" data-testid="ledger-period-mode" className="select" value={periodMode} onChange={(e) => { setPeriodMode(e.target.value); setSelected(""); setLedger(null); }}>
+            <option value="monthly">Bulanan</option>
+            <option value="yearly">Tahunan</option>
+          </select>
+        </div>
+        {periodMode === "monthly" && <div>
           <label className="label" htmlFor="ledger-month">Bulan</label>
           <select id="ledger-month" data-testid="ledger-month" className="select" value={month}
                   onChange={(e) => { setMonth(Number(e.target.value)); setSelected(""); setLedger(null); }}>
             {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
           </select>
-        </div>
+        </div>}
         <div>
           <label className="label" htmlFor="ledger-year">Tahun</label>
           <select id="ledger-year" data-testid="ledger-year" className="select" value={year}
