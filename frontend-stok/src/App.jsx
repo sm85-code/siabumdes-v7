@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/lib/auth.jsx";
-import StokLayout from "@/components/StokLayout.jsx";
+import Layout from "@/components/Layout.jsx";
 import Login from "@/pages/Login.jsx";
 import DashboardStok from "@/pages/DashboardStok.jsx";
 import Products from "@/pages/Products.jsx";
@@ -15,7 +15,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
 
           {/* Protected operational routes share one layout that guards the session. */}
-          <Route element={<StokLayout />}>
+          <Route element={<Layout />}>
             <Route path="/" element={<DashboardStok />} />
             <Route path="/produk" element={<Products />} />
             <Route path="/mutasi" element={<Mutasi />} />
