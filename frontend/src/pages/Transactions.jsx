@@ -122,9 +122,6 @@ export default function Transactions() {
   const [customPreset, setCustomPreset] = useState("ytd");
   const [customStart, setCustomStart] = useState(`${new Date().getFullYear()}-01-01`);
   const [customEnd, setCustomEnd] = useState(new Date().toISOString().slice(0, 10));
-  const [customPreset, setCustomPreset] = useState("ytd");
-  const [customStart, setCustomStart] = useState(`${new Date().getFullYear()}-01-01`);
-  const [customEnd, setCustomEnd] = useState(new Date().toISOString().slice(0, 10));
   const [selected, setSelected] = useState(new Set());
 
   const load = useCallback(async () => {
