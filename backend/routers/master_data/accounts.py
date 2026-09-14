@@ -294,6 +294,7 @@ async def import_accounts(file: UploadFile = File(...), _: dict = Depends(requir
 @router.post("/transaction-types/import")
 async def import_transaction_types(file: UploadFile = File(...), _: dict = Depends(require_roles(*ADMIN_LEVEL))):
     from openpyxl import load_workbook
+    import uuid
     content = await file.read()
     ws = load_workbook(filename=__import__("io").BytesIO(content), read_only=True, data_only=True).active
     rows = list(ws.iter_rows(values_only=True))
@@ -306,7 +307,7 @@ async def import_transaction_types(file: UploadFile = File(...), _: dict = Depen
         item = dict(zip(headers, values))
         if not item.get("code") or not item.get("name"): continue
         if await db.transaction_types.select_one({"code": str(item["code"])}): skipped += 1; continue
-        await db.transaction_types.create({"code": str(item["code"]), "name": str(item["name"]), "debit": str(item.get("debit") or ""), "credit": str(item.get("credit") or ""), "group": str(item.get("group") or "BUMDES")})
+        await db.transaction_types.create({"id": str(uuid.uuid4()), "code": str(item["code"]).strip(), "name": str(item["name"]).strip(), "debit": str(item.get("debit") or "").strip(), "credit": str(item.get("credit") or "").strip(), "group": str(item.get("group") or "BUMDES").strip()})
         inserted += 1
     return {"inserted": inserted, "skipped": skipped, "errors": []}
 
