@@ -543,7 +543,7 @@ if (!(await confirm({
 
       {/* Unified group and monthly period filters */}
       <div className="card" data-testid="tx-filters">
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-start">
           <div>
             <label className="label" htmlFor="tx-group-select">Kelompok</label>
             <select id="tx-group-select" data-testid="tx-group-select" className="select"

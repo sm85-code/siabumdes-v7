@@ -118,7 +118,7 @@ export default function BukuBesar() {
         </p>
       </div>
 
-      <div className="card grid grid-cols-1 sm:grid-cols-3 gap-4 items-end" data-testid="ledger-filters">
+      <div className="card grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start" data-testid="ledger-filters">
         <div>
           <label className="label" htmlFor="ledger-group-select">Kelompok</label>
           <select id="ledger-group-select" data-testid="ledger-group-select" className="select"

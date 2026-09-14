@@ -185,7 +185,7 @@ export default function Reports() {
           </div>
 
           <div className="card">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
               <div>
                 <label className="label" htmlFor="report-type-select">Jenis Laporan Keuangan</label>
                 <select id="report-type-select" data-testid="report-type-select" className="select" value={active}
@@ -227,7 +227,7 @@ export default function Reports() {
 
       {tab === "kinerja" && (
         <div className="card">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             <div>
               <label className="label" htmlFor="performance-period-mode">Periode</label>
               <select id="performance-period-mode" data-testid="performance-period-mode" className="select" value={periodMode} onChange={(e) => { setPeriodMode(e.target.value); setKinerja(null); }}>
