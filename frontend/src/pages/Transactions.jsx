@@ -566,7 +566,7 @@ if (!(await confirm({
     <option value="ytd">Year to Date</option><option value="qtd">Quarter to Date</option><option value="mtd">Month to Date</option><option value="dates">Pilih tanggal</option>
   </select>
   {customPreset === "dates" && <div className="grid grid-cols-2 gap-2 mt-2"><input className="input" type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} /><input className="input" type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} /></div>}
-  </div>}
+  </>}
   </div>
   {periodMode === "monthly" && <div>
   <label className="label" htmlFor="tx-month">Bulan</label>
