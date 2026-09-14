@@ -118,6 +118,7 @@ export default function Transactions() {
   const [activeGroup, setActiveGroup] = useState("BUMDES"); // BUMDES | UU01..UU06
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [periodMode, setPeriodMode] = useState("monthly");
   const [selected, setSelected] = useState(new Set());
 
   const load = useCallback(async () => {
@@ -313,13 +314,14 @@ export default function Transactions() {
   }, [activeGroup, units]);
 
   const monthPrefix = `${year}-${pad(month)}`;
+  const yearPrefix = `${year}-`;
   const filteredTxs = useMemo(() => {
-    return txs.filter(t => {
-      const inGroup = activeGroup === "BUMDES" ? !t.unit_usaha_id : t.unit_usaha_id === activeUnitId;
-      const inMonth = (t.date || "").startsWith(monthPrefix);
-      return inGroup && inMonth;
-    });
-  }, [txs, activeGroup, activeUnitId, monthPrefix]);
+  return txs.filter(t => {
+  const inGroup = activeGroup === "BUMDES" ? !t.unit_usaha_id : t.unit_usaha_id === activeUnitId;
+  const inPeriod = periodMode === "yearly" ? (t.date || "").startsWith(yearPrefix) : (t.date || "").startsWith(monthPrefix);
+  return inGroup && inPeriod;
+  });
+  }, [txs, activeGroup, activeUnitId, monthPrefix, yearPrefix, periodMode]);
 
   const sortState = useSort(filteredTxs, "date", "desc");
 
@@ -341,9 +343,9 @@ const proceed = await confirm({
   });
   if (!proceed) return;
     }
-    const first = `${year}-${pad(month)}-01`;
-    // Use local-date components (avoid toISOString UTC-shift bug)
-    const jsLast = new Date(year, month, 0);
+  const first = periodMode === "yearly" ? `${year}-01-01` : `${year}-${pad(month)}-01`;
+  // Use local-date components (avoid toISOString UTC-shift bug)
+  const jsLast = periodMode === "yearly" ? new Date(year, 12, 0) : new Date(year, month, 0);
     const last = `${jsLast.getFullYear()}-${pad(jsLast.getMonth() + 1)}-${pad(jsLast.getDate())}`;
     const params = new URLSearchParams({ start_date: first, end_date: last });
     if (activeGroup === "BUMDES") params.set("unit_usaha_id", "");
@@ -544,15 +546,22 @@ if (!(await confirm({
               {groupTabs.map(g => <option key={g.key} value={g.key}>{g.label}</option>)}
             </select>
           </div>
-          <div>
-            <label className="label" htmlFor="tx-month">Bulan</label>
+  <div>
+  <label className="label" htmlFor="tx-period-mode">Periode</label>
+  <select id="tx-period-mode" data-testid="tx-period-mode" className="select" value={periodMode} onChange={(e) => setPeriodMode(e.target.value)}>
+  <option value="monthly">Bulanan</option>
+  <option value="yearly">Tahunan</option>
+  </select>
+  </div>
+  {periodMode === "monthly" && <div>
+  <label className="label" htmlFor="tx-month">Bulan</label>
             <select id="tx-month" data-testid="tx-month" className="select"
                     value={month} onChange={(e) => setMonth(Number(e.target.value))}>
               {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label" htmlFor="tx-year">Tahun</label>
+  </select>
+  </div>}
+  <div>
+  <label className="label" htmlFor="tx-year">Tahun</label>
             <select id="tx-year" data-testid="tx-year" className="select"
                     value={year} onChange={(e) => setYear(Number(e.target.value))}>
               {YEARS.map(y => <option key={y} value={y}>{y}</option>)}

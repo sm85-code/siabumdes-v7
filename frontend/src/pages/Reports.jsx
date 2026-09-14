@@ -34,7 +34,10 @@ export default function Reports() {
 
   const [year, setYear] = useState(currentYear);
   const [month, setMonth] = useState(currentMonth);
-  const { start, end } = monthRange(year, month);
+  const [periodMode, setPeriodMode] = useState("monthly");
+  const { start: monthlyStart, end: monthlyEnd } = monthRange(year, month);
+  const start = periodMode === "yearly" ? `${year}-01-01` : monthlyStart;
+  const end = periodMode === "yearly" ? `${year}-12-31` : monthlyEnd;
   // tab: laporan | kinerja
   const [tab, setTab] = useState("laporan");
   const [active, setActive] = useState("laba-rugi");
@@ -187,11 +190,18 @@ export default function Reports() {
                 </select>
               </div>
               <div>
+                <label className="label" htmlFor="report-period-mode">Periode</label>
+                <select id="report-period-mode" data-testid="report-period-mode" className="select" value={periodMode} onChange={(e) => { setPeriodMode(e.target.value); setData(null); setKinerja(null); }}>
+                  <option value="monthly">Bulanan</option>
+                  <option value="yearly">Tahunan</option>
+                </select>
+              </div>
+              {periodMode === "monthly" && <div>
                 <label className="label" htmlFor="report-month">Bulan</label>
                 <select id="report-month" data-testid="report-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setData(null); setKinerja(null); }}>
                   {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
                 </select>
-              </div>
+              </div>}
               <div>
                 <label className="label" htmlFor="report-year">Tahun</label>
                 <select id="report-year" data-testid="report-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setData(null); setKinerja(null); }}>
@@ -210,11 +220,18 @@ export default function Reports() {
         <div className="card">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
             <div>
+              <label className="label" htmlFor="performance-period-mode">Periode</label>
+              <select id="performance-period-mode" data-testid="performance-period-mode" className="select" value={periodMode} onChange={(e) => { setPeriodMode(e.target.value); setKinerja(null); }}>
+                <option value="monthly">Bulanan</option>
+                <option value="yearly">Tahunan</option>
+              </select>
+            </div>
+            {periodMode === "monthly" && <div>
               <label className="label" htmlFor="performance-month">Bulan</label>
               <select id="performance-month" data-testid="performance-month" className="select" value={month} onChange={(e) => { setMonth(Number(e.target.value)); setKinerja(null); }}>
                 {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
               </select>
-            </div>
+            </div>}
             <div>
               <label className="label" htmlFor="performance-year">Tahun</label>
               <select id="performance-year" data-testid="performance-year" className="select" value={year} onChange={(e) => { setYear(Number(e.target.value)); setKinerja(null); }}>
