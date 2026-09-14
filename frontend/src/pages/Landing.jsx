@@ -32,7 +32,7 @@ export default function Landing() {
       <BatikBackdrop />
 
       {/* ===== Top bar ===== */}
-      <header className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-6 sm:pt-8 flex items-center justify-between">
+      <header className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src="/logo-transparent.png" alt="Logo BUMDES" data-testid="landing-logo"
                className="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-90" />
@@ -52,7 +52,7 @@ export default function Landing() {
       </header>
 
       {/* ===== Hero ===== */}
-      <section className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pt-12 sm:pt-24 pb-8 sm:pb-10 text-center">
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-24 pb-8 sm:pb-10 text-center">
         <div className="inline-block px-3.5 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold tracking-[0.18em] mb-6 fade-slow"
              style={{ background: "var(--primary-light)", color: "var(--primary-dark)" }}>
           PAPAN KINERJA · BUMDes · TAHUN {data?.year || new Date().getFullYear()}
@@ -74,7 +74,7 @@ export default function Landing() {
       </section>
 
       {/* ===== Angka utama (agregat BUMDES pusat) ===== */}
-      <section className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pb-6" data-testid="landing-stats">
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-6" data-testid="landing-stats">
         {err && <p className="text-center text-sm" style={{ color: "var(--status-error)" }}>Gagal memuat data ringkasan.</p>}
         {!data && !err && <p className="text-center text-sm" style={{ color: "var(--text-muted)" }}>Memuat...</p>}
         {data && (
@@ -139,7 +139,7 @@ export default function Landing() {
       )}
 
       {/* ===== Bagian 3 · Narasi Komitmen ===== */}
-      <section className="relative z-10 max-w-4xl mx-auto px-5 sm:px-8 pb-16">
+      <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
         <div className="rounded-2xl p-6 sm:p-10"
              style={{ background: "rgba(255,255,255,0.6)", backdropFilter: "blur(6px)",
                       border: "1px solid var(--border)" }}>
@@ -186,8 +186,8 @@ export default function Landing() {
               &rdquo;
             </span>
             <div
-              className="relative italic text-sm sm:text-base leading-relaxed text-justify space-y-3.5"
-              style={{ color: "var(--text-secondary)", fontFamily: "Georgia, 'Times New Roman', serif" }}
+              className="relative font-body text-sm sm:text-base leading-relaxed text-left sm:text-justify space-y-3.5 tracking-[-0.01em]"
+              style={{ color: "var(--text-secondary)" }}
             >
               <p>
                 SIA BUMDes Karya Raharja adalah wujud nyata komitmen BUMDes Karya Raharja Desa
@@ -217,7 +217,7 @@ export default function Landing() {
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="relative z-10 max-w-6xl mx-auto px-5 sm:px-8 pb-8 text-center">
+      <footer className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 text-center">
         <p className="text-[11px] sm:text-xs" style={{ color: "var(--text-muted)" }}>
           © {new Date().getFullYear()} BUMDes Karya Raharja Wonoharjo. All Rights Reserved.
         </p>
