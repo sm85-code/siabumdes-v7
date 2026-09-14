@@ -308,27 +308,28 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td><span className="badge">BUMDES</span></td>
-                    <td className="num">{fmtRp(kinerja.bumdes?.pendapatan || 0)}</td>
-                    <td className="num">{fmtRp(kinerja.bumdes?.beban || 0)}</td>
-                    <td className="num font-semibold"
-                        style={{ color: (kinerja.bumdes?.laba_bersih || 0) >= 0 ? "#2E4F7C" : "#D97878" }}>
-                      {fmtRp(kinerja.bumdes?.laba_bersih || 0)}
-                    </td>
-                    <td className="num" style={{ color: "#3A5A7D" }} data-testid="bumdes-modal-18">
-                      {fmtRp(kinerja.bumdes?.share_modal_18 || 0)}
-                    </td>
-                    <td>
-                      <ul className="text-xs space-y-0.5">
-                        <li data-testid="bumdes-pades-30">PADes (30%) = <b>{fmtRp(kinerja.bumdes?.share_pades_30 || 0)}</b></li>
-                        <li data-testid="bumdes-penasihat-7">Penasihat (7%) = <b>{fmtRp(kinerja.bumdes?.share_penasihat_7 || 0)}</b></li>
-                        <li data-testid="bumdes-pengawas-5">Pengawas (5%) = <b>{fmtRp(kinerja.bumdes?.share_pengawas_5 || 0)}</b></li>
-                        <li data-testid="bumdes-pengurus-35">Pengurus (35%) = <b>{fmtRp(kinerja.bumdes?.share_pengurus_35 || 0)}</b></li>
-                        <li data-testid="bumdes-dana-sosial-5">Dana Sosial (5%) = <b>{fmtRp(kinerja.bumdes?.share_dana_sosial_5 || 0)}</b></li>
-                      </ul>
-                    </td>
-                  </tr>
+                  {[
+                    ["PADes (30%)", "share_pades_30", "bumdes-pades-30"],
+                    ["Penasihat (7%)", "share_penasihat_7", "bumdes-penasihat-7"],
+                    ["Pengawas (5%)", "share_pengawas_5", "bumdes-pengawas-5"],
+                    ["Pengurus (35%)", "share_pengurus_35", "bumdes-pengurus-35"],
+                    ["Dana Sosial (5%)", "share_dana_sosial_5", "bumdes-dana-sosial-5"],
+                  ].map(([label, valueKey, testId], index) => (
+                    <tr key={valueKey}>
+                      {index === 0 && <>
+                        <td rowSpan={5}><span className="badge">BUMDES</span></td>
+                        <td rowSpan={5} className="num">{fmtRp(kinerja.bumdes?.pendapatan || 0)}</td>
+                        <td rowSpan={5} className="num">{fmtRp(kinerja.bumdes?.beban || 0)}</td>
+                        <td rowSpan={5} className="num font-semibold" style={{ color: (kinerja.bumdes?.laba_bersih || 0) >= 0 ? "#2E4F7C" : "#D97878" }}>
+                          {fmtRp(kinerja.bumdes?.laba_bersih || 0)}
+                        </td>
+                        <td rowSpan={5} className="num" style={{ color: "#3A5A7D" }} data-testid="bumdes-modal-18">
+                          {fmtRp(kinerja.bumdes?.share_modal_18 || 0)}
+                        </td>
+                      </>}
+                      <td data-testid={testId}>{label} = <b>{fmtRp(kinerja.bumdes?.[valueKey] || 0)}</b></td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
