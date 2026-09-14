@@ -76,7 +76,7 @@ async def shutdown_db_client():
     await close_database()
 
 
-from routers import master_data_router, transactions_router, reports_router  # noqa: E402
+from routers import master_data_router, transactions_router, reports_router, stok  # noqa: E402
 from routers.auth import admin_users, gdrive, profile, session  # noqa: E402
 
 # Register authentication routes directly so the deployed app cannot omit the
@@ -84,7 +84,7 @@ from routers.auth import admin_users, gdrive, profile, session  # noqa: E402
 for auth_module in (session, profile, admin_users, gdrive):
     app.include_router(auth_module.router, prefix=API_PREFIX)
 
-for router_module in (master_data_router, transactions_router, reports_router):
+for router_module in (master_data_router, transactions_router, reports_router, stok):
     app.include_router(router_module.router)
 
 @app.get("/")
