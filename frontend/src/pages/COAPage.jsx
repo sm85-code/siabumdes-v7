@@ -462,19 +462,6 @@ export default function COAPage() {
 
       {activeSection === "transaction-types" && <>
       {/* ============ JENIS TRANSAKSI ============ */}
-      {/* Duplikasi tab selector di atas tabel Jenis Transaksi */}
-      <div className="card card-sm" data-testid="tt-group-tabs">
-        <label className="label mb-2">Kelompok (Jenis Transaksi)</label>
-        <div className="flex flex-wrap gap-2">
-          {groupTabs.map(g => (
-            <button key={g.key} data-testid={`tt-tab-${g.key}`}
-                    onClick={() => setGroup(g.key)}
-                    className={`btn text-sm ${group === g.key ? "btn-primary" : "btn-outline"}`}>
-              {g.label}<span className="text-xs opacity-70 ml-1">· {g.sub}</span>
-            </button>
-          ))}
-        </div>
-      </div>
       <div className="flex justify-between items-center gap-4 flex-wrap pt-4">
         <div>
           <h2 className="font-heading text-2xl font-bold">Jenis Transaksi — {groupLabel}</h2>
