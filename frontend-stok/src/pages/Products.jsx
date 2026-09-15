@@ -8,10 +8,9 @@ const KATEGORI_OPTIONS = ["Sembako", "Minuman", "Makanan Ringan", "Rumah Tangga"
 const SATUAN_OPTIONS = ["pcs", "kg", "pack", "liter", "botol", "dus"];
 
 const EMPTY_FORM = {
-  kode: "",
-  nama: "",
+  sku: "",
+  nama_produk: "",
   kategori: KATEGORI_OPTIONS[0],
-  stok: "",
   satuan: SATUAN_OPTIONS[0],
   harga_beli: "",
   harga_jual: "",
@@ -94,9 +93,9 @@ export default function Products() {
               </tr>
             ) : (
               products.map((p) => (
-                <tr key={p.id ?? p.kode} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-600">{p.kode ?? "-"}</td>
-                  <td className="px-4 py-3 font-medium text-slate-900">{p.nama ?? "-"}</td>
+                <tr key={p.id ?? p.sku} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 font-mono text-xs text-slate-600">{p.sku ?? "-"}</td>
+                  <td className="px-4 py-3 font-medium text-slate-900">{p.nama_produk ?? "-"}</td>
                   <td className="px-4 py-3 text-slate-600">{p.kategori ?? "-"}</td>
                   <td className="px-4 py-3 text-right font-medium tabular-nums">{p.stok ?? 0}</td>
                   <td className="px-4 py-3 text-slate-600">{p.satuan ?? "-"}</td>
@@ -135,15 +134,14 @@ function ProductModal({ onClose, onSaved }) {
     setSaving(true);
     try {
       const payload = {
-        kode: form.kode.trim(),
-        nama: form.nama.trim(),
+        sku: form.sku.trim(),
+        nama_produk: form.nama_produk.trim(),
         kategori: form.kategori,
-        stok: Number(form.stok) || 0,
         satuan: form.satuan,
         harga_beli: Number(form.harga_beli) || 0,
         harga_jual: Number(form.harga_jual) || 0,
-        // Bind product to the offline store unit context implicitly.
-        unit_usaha_id: UNIT_USAHA_ID,
+        // The backend enforces UU05; this is sent for explicit compatibility.
+        unit_id: UNIT_USAHA_ID,
       };
       await request(api.post("/stok/produk", payload));
       onSaved();
@@ -170,7 +168,7 @@ function ProductModal({ onClose, onSaved }) {
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="SKU / Kode" required>
-              <input value={form.kode} onChange={setField("kode")} required className="input" placeholder="mis. BRS-5KG" />
+              <input value={form.sku} onChange={setField("sku")} required className="input" placeholder="mis. BRS-5KG" />
             </Field>
             <Field label="Kategori">
               <select value={form.kategori} onChange={setField("kategori")} className="input">
@@ -180,13 +178,10 @@ function ProductModal({ onClose, onSaved }) {
           </div>
 
           <Field label="Nama Produk" required>
-            <input value={form.nama} onChange={setField("nama")} required className="input" placeholder="mis. Beras Premium 5 kg" />
+            <input value={form.nama_produk} onChange={setField("nama_produk")} required className="input" placeholder="mis. Beras Premium 5 kg" />
           </Field>
 
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Stok Saat Ini" required>
-              <input type="number" min="0" step="1" value={form.stok} onChange={setField("stok")} required className="input" placeholder="0" />
-            </Field>
             <Field label="Satuan">
               <select value={form.satuan} onChange={setField("satuan")} className="input">
                 {SATUAN_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
