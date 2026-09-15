@@ -30,9 +30,14 @@ export default function DashboardStok() {
       .get("/stok/masuk/ringkasan-mingguan")
       .then((r) => {
         if (!active) return;
-        setSummary(r.data?.summary ?? r.data ?? {});
-        setLowStock(r.data?.low_stock ?? []);
-        setActivities(r.data?.recent_activities ?? []);
+        const data = r.data ?? {};
+        setSummary({
+          total_belum_sinkron: data.total_belum_sinkron ?? data.total_biaya ?? 0,
+          pending_count: data.pending_count ?? data.jumlah_item ?? 0,
+          last_synced_at: data.last_synced_at ?? null,
+        });
+        setLowStock(data.low_stock ?? []);
+        setActivities(data.recent_activities ?? []);
       })
       .catch(() => {
         /* backend inventory endpoints not wired yet — keep placeholder state */
