@@ -185,6 +185,10 @@ async def catat_mutasi(data: dict, _: dict = Depends(require_stok_access)):
 
 @router.post("/masuk/sinkronisasi-mingguan")
 async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
+    expected_transaction_name = "2. Pembelian Barang Dagangan (Sinkronisasi Aplikasi)"
+    expected_debit = "1.1.05.51"
+    expected_credit = "1.1.01.15"
+
     async with SessionLocal() as session:
         async with session.begin():
             items = list((await session.scalars(select(StokMasuk).where(StokMasuk.status_keuangan == "belum_sinkron", StokMasuk.unit_id == UNIT_ID).with_for_update())).all())
@@ -192,23 +196,36 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not items:
                 return {"pesan": "Tidak ada stok masuk yang perlu disinkronkan", "jumlah_item": 0, "total_biaya": 0}
 
-            # PLACEHOLDER INTEGRASI LEDGER:
-            # Jika model SQLAlchemy TransaksiKeuangan tersedia, import dan buat
-            # satu row: jenis_transaksi="PENGELUARAN", kategori=..., nominal=total,
-            # unit_id="UU05". Pada repo saat ini transaksi lama disimpan sebagai
-            # StoredEntity; baris berikut mempertahankan format tersebut dan ikut
-            # transaksi SQLAlchemy yang sama (commit atomik).
+            master_rows = (await session.execute(
+                select(StoredEntity).where(StoredEntity.namespace.in_(["master_data", "master_data_transaction_types", "master_data_accounts"]))
+            )).scalars().all()
+            transaction_exists = any(
+                str(row.payload.get("name", row.payload.get("nama", ""))).strip() == expected_transaction_name
+                or str(row.payload.get("code", row.payload.get("kode", ""))).strip() == "2"
+                for row in master_rows
+            )
+            if not transaction_exists:
+                raise HTTPException(status_code=409, detail=f"Jenis transaksi wajib belum tersedia: {expected_transaction_name}")
+
+            account_names = {str(row.payload.get("code", row.payload.get("kode", ""))).strip(): str(row.payload.get("name", row.payload.get("nama", ""))).strip() for row in master_rows}
+            if account_names.get(expected_debit) != "Persediaan Barang Dagangan":
+                raise HTTPException(status_code=409, detail=f"Akun debit UU05 belum tersedia atau namanya tidak sesuai: {expected_debit} - Persediaan Barang Dagangan")
+            if account_names.get(expected_credit) != "Kas/Bank - UU05":
+                raise HTTPException(status_code=409, detail=f"Akun kredit UU05 belum tersedia atau namanya tidak sesuai: {expected_credit} - Kas/Bank - UU05")
+
             ledger = StoredEntity(
                 namespace="transactions",
                 id=str(uuid4()),
                 payload={
                     "date": datetime.now(timezone.utc).date().isoformat(),
                     "unit_usaha_id": UNIT_ID,
-                    "transaction_type": "PENGELUARAN",
-                    "description": "Pembelian Stok Persediaan (Mingguan)",
+                    "transaction_type": expected_transaction_name,
+                    "description": expected_transaction_name,
                     "amount": total,
-                    "debit_account_code": "1-1400",
-                    "credit_account_code": "1-1100",
+                    "debit_account_code": expected_debit,
+                    "debit_account_name": "Persediaan Barang Dagangan",
+                    "credit_account_code": expected_credit,
+                    "credit_account_name": "Kas/Bank - UU05",
                     "reference": "sinkronisasi-stok-mingguan",
                     "created_by": "sistem-stok",
                 },
