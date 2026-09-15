@@ -200,8 +200,8 @@ function MutationModal({ type, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="mutation-modal-title">
-      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:items-center sm:py-8" role="dialog" aria-modal="true" aria-labelledby="mutation-modal-title">
+      <div className="my-4 w-full max-w-lg rounded-xl bg-white shadow-xl sm:my-0">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 id="mutation-modal-title" className="flex items-center gap-2 text-base font-semibold text-slate-900">
             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${meta.badge}`}>
