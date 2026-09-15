@@ -114,7 +114,7 @@ export default function StockLogs() {
               logs.map((log) => {
                 const meta = MUTATION_META[log.jenis] ?? MUTATION_META.in;
                 const Icon = meta.icon;
-                const synced = log.status_keuangan === "terbuku";
+                const synced = ["terbuku", "terkirim"].includes(log.status_keuangan);
                 return (
                   <tr key={log.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-600">{fmtDateTime(log.tanggal ?? log.created_at)}</td>
@@ -129,7 +129,7 @@ export default function StockLogs() {
                     <td className="px-4 py-3">
                       {synced ? (
                         <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                          Terbuku
+                          Terkirim ke Keuangan
                         </span>
                       ) : (
                         <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
