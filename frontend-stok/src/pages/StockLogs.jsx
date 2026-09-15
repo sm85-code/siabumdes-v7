@@ -200,8 +200,8 @@ function MutationModal({ type, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:items-center sm:py-8" role="dialog" aria-modal="true" aria-labelledby="mutation-modal-title">
-      <div className="modal-scroll my-4 w-full max-w-lg overflow-y-auto rounded-xl bg-white text-left shadow-xl sm:my-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="mutation-modal-title">
+      <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-white text-left shadow-xl sm:max-h-[calc(100dvh-3rem)]">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 id="mutation-modal-title" className="flex items-center gap-2 text-base font-semibold text-slate-900">
             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${meta.badge}`}>
@@ -214,7 +214,8 @@ function MutationModal({ type, onClose, onSaved }) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
+          <div className="space-y-4">
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           ) : null}
@@ -260,6 +261,7 @@ function MutationModal({ type, onClose, onSaved }) {
               {saving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
               {saving ? "Menyimpan…" : "Simpan Mutasi"}
             </button>
+          </div>
           </div>
         </form>
       </div>
