@@ -48,9 +48,10 @@ class StoredEntity(Base):
     )
 
 
+_ssl_required = os.getenv("DATABASE_SSL", "require") != "disable"
 engine = create_async_engine(
     _database_url(),
-    connect_args={"ssl": "require", "timeout": 15},
+    connect_args={"ssl": "require" if _ssl_required else None, "timeout": 15},
     pool_pre_ping=True,
     pool_recycle=300,
     pool_timeout=15,
