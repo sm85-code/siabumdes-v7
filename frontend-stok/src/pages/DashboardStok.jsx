@@ -64,7 +64,7 @@ export default function DashboardStok() {
   };
 
   return (
-    <section className="mx-auto max-w-5xl">
+    <section data-testid="stok-dashboard-page" className="mx-auto max-w-5xl">
       <header className="mb-6">
         <h1 className="text-xl font-semibold text-slate-900">Dashboard &amp; Sinkronisasi</h1>
         <p className="text-sm text-slate-500">
