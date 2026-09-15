@@ -51,8 +51,8 @@ export default function StockLogs() {
 
   return (
     <section data-testid="stok-logs-page">
-      <header className="page-header mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <header className="page-header mb-6 flex w-full flex-wrap items-start justify-between gap-4 text-left">
+        <div className="min-w-0 text-left">
           <h1 className="text-xl font-semibold text-slate-900">Log Mutasi Barang</h1>
           <p className="text-sm text-slate-500">Riwayat stok masuk dan keluar Unit Toko Offline (UU05).</p>
         </div>
@@ -201,7 +201,7 @@ function MutationModal({ type, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:items-center sm:py-8" role="dialog" aria-modal="true" aria-labelledby="mutation-modal-title">
-      <div className="my-4 w-full max-w-lg rounded-xl bg-white shadow-xl sm:my-0">
+      <div className="modal-scroll my-4 w-full max-w-lg overflow-y-auto rounded-xl bg-white text-left shadow-xl sm:my-0">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 id="mutation-modal-title" className="flex items-center gap-2 text-base font-semibold text-slate-900">
             <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${meta.badge}`}>
