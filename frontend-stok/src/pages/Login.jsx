@@ -27,13 +27,13 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-full items-center justify-center p-6">
+    <div className="auth-bg flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-white">
             <Boxes size={26} aria-hidden="true" />
           </div>
-          <h1 className="text-lg font-semibold">Manajemen Stok</h1>
+          <h1 className="font-heading text-xl font-bold">Sistem Manajemen Stok</h1>
           <p className="text-sm text-slate-500">BUMDes Karya Raharja</p>
         </div>
 
