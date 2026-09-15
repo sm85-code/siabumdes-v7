@@ -223,8 +223,8 @@ function MutationModal({ type, onClose, onSaved }) {
             <select value={form.produk_id} onChange={setField("produk_id")} required className="input">
               <option value="" disabled>Pilih produk…</option>
               {products.map((p) => (
-                <option key={p.id ?? p.kode} value={p.id ?? p.kode}>
-                  {p.nama} {p.kode ? `(${p.kode})` : ""}
+                <option key={p.id ?? p.sku} value={p.id ?? p.sku}>
+                  {p.nama_produk} {p.sku ? `(${p.sku})` : ""}
                 </option>
               ))}
             </select>

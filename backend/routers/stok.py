@@ -131,6 +131,48 @@ async def catat_stok_keluar(data: StokKeluarInput, _: dict = Depends(require_sto
         return {"pesan": "Stok keluar berhasil dicatat", "id": item.id, "stok_saat_ini": product.stok_saat_ini}
 
 
+@router.get("/mutasi")
+async def daftar_mutasi(_: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        masuk = (await session.execute(
+            select(StokMasuk, Produk.nama_produk)
+            .join(Produk, Produk.id == StokMasuk.produk_id)
+            .where(StokMasuk.unit_id == UNIT_ID)
+            .order_by(StokMasuk.tanggal.desc())
+        )).all()
+        keluar = (await session.execute(
+            select(StokKeluar, Produk.nama_produk)
+            .join(Produk, Produk.id == StokKeluar.produk_id)
+            .where(StokKeluar.unit_id == UNIT_ID)
+            .order_by(StokKeluar.tanggal.desc())
+        )).all()
+        rows = [
+            {"id": item.id, "tanggal": item.tanggal, "nama_produk": nama, "jenis": "in", "jumlah": item.jumlah, "total_biaya": item.total_biaya, "status_keuangan": item.status_keuangan}
+            for item, nama in masuk
+        ] + [
+            {"id": item.id, "tanggal": item.tanggal, "nama_produk": nama, "jenis": "out", "jumlah": item.jumlah, "total_biaya": 0, "status_keuangan": "terbuku"}
+            for item, nama in keluar
+        ]
+        return sorted(rows, key=lambda row: row["tanggal"], reverse=True)
+
+
+@router.get("/masuk/ringkasan-mingguan")
+async def ringkasan_mingguan(_: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        items = (await session.scalars(select(StokMasuk).where(StokMasuk.status_keuangan == "belum_sinkron", StokMasuk.unit_id == UNIT_ID))).all()
+        return {"total_biaya": sum(item.total_biaya for item in items), "jumlah_item": len(items), "status_keuangan": "belum_sinkron" if items else "terkirim"}
+
+
+@router.post("/mutasi")
+async def catat_mutasi(data: dict, _: dict = Depends(require_stok_access)):
+    jenis = data.get("jenis")
+    if jenis == "in":
+        return await catat_stok_masuk(StokMasukInput(produk_id=int(data["produk_id"]), jumlah=int(data["jumlah"]), harga_beli_satuan=int(data.get("harga_satuan", 0))))
+    if jenis == "out":
+        return await catat_stok_keluar(StokKeluarInput(produk_id=int(data["produk_id"]), jumlah=int(data["jumlah"]), tipe_keluar="penjualan", keterangan=data.get("keterangan")))
+    raise HTTPException(status_code=422, detail="Jenis mutasi harus in atau out")
+
+
 @router.post("/masuk/sinkronisasi-mingguan")
 async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
     async with SessionLocal() as session:
