@@ -7,7 +7,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "20260915_04_inventory_tables"
-down_revision = "20260913_03_remove_legacy_migration_table"
+down_revision = "20260913_03"
 branch_labels = None
 depends_on = None
 

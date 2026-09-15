@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Boxes, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth.jsx";
 import { getApiError } from "@/lib/api.js";
 
@@ -30,9 +30,11 @@ export default function Login() {
     <div className="auth-bg flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand text-white">
-            <Boxes size={26} aria-hidden="true" />
-          </div>
+          <img
+            src="/logo-bumdes.webp"
+            alt="Logo BUMDes Karya Raharja"
+            className="mb-3 h-24 w-24 rounded-full object-cover shadow-sm ring-4 ring-white"
+          />
           <h1 className="font-heading text-xl font-bold">Sistem Manajemen Stok</h1>
           <p className="text-sm text-slate-500">BUMDes Karya Raharja</p>
         </div>
