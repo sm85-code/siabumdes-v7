@@ -23,13 +23,14 @@ services:
       - DATABASE_URL=postgresql://bumdes:bumdes_pass@db:5432/bumdes
       - DATABASE_SSL=disable
       - CORS_ORIGINS=https://3000-${BASE44_PUBLIC_HOST_SUFFIX},https://3001-${BASE44_PUBLIC_HOST_SUFFIX},http://localhost:3000,http://localhost:5174
+      - PYTHONPATH=/app/backend
     env_file:
       - ./.env.base44-defaults
       - /run/base44/app.env
     depends_on:
       db:
         condition: service_healthy
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn server:app --host 0.0.0.0 --port 8000 --reload"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\" || exit 1"]
       interval: 10s
