@@ -187,6 +187,8 @@ async def bulk_delete_transactions(ids: List[str], dep: dict = Depends(require_r
 
 @router.delete("/transactions/{tx_id}")
 async def delete_transaction(tx_id: str, dep: dict = Depends(require_roles("admin", "direktur", "bendahara"))):
+    if not tx_id or tx_id == "undefined" or tx_id == "null":
+        raise HTTPException(status_code=400, detail="ID transaksi tidak valid")
     existing = await db.transactions.select_one({"id": tx_id}, {"_id": 0, "date": 1})
     if existing:
         await _check_period_not_blocked(dep, existing.get("date", ""))

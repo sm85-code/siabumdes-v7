@@ -239,7 +239,8 @@ export default function Transactions() {
   };
 
   const del = async (id) => {
-    if (!(await confirm({ title: "Hapus transaksi", description: "Transaksi akan dihapus dan tidak dapat dipulihkan.", confirmLabel: "Hapus", destructive: true }))) return;
+  if (!id || id === "undefined" || id === "null") { notify("ID transaksi tidak valid"); return; }
+  if (!(await confirm({ title: "Hapus transaksi", description: "Transaksi akan dihapus dan tidak dapat dipulihkan.", confirmLabel: "Hapus", destructive: true }))) return;
     await api.delete(`/transactions/${id}`);
     load();
   };

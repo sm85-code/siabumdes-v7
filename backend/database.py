@@ -190,7 +190,12 @@ class Repository:
             if length: statement = statement.limit(length)
             async with SessionLocal() as session:
                 rows = (await session.execute(statement)).scalars()
-                return [_project(copy.deepcopy(row.payload), projection) for row in rows]
+                results = []
+                for row in rows:
+                    item = _project(copy.deepcopy(row.payload), projection)
+                    item.setdefault("id", row.id)
+                    results.append(item)
+                return results
         return Query(loader)
     async def select_one(self, criteria=None, projection=None):
         rows = await self.select(criteria, projection).all(1); return rows[0] if rows else None
