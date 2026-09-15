@@ -9,7 +9,7 @@ Both live in the same repo as `frontend/` and `backend/`.
 
 - **Single-origin wiring**: Vite dev server (port 3000) proxies `/api` to the FastAPI backend (port 8000, internal). This keeps cookie-based auth (HttpOnly + SameSite=None + Secure) working through the HTTPS preview proxy.
 - `VITE_BACKEND_URL` is intentionally unset — the frontend falls back to `window.location.origin`, so all API calls go through the Vite proxy.
-- `CORS_ORIGINS` is set dynamically via compose to `https://3000-${BASE44_PUBLIC_HOST_SUFFIX}` so the backend's CSRF origin check passes.
+- `CORS_ORIGINS` is set dynamically via compose to `https://3000-${BASE44_PUBLIC_HOST_SUFFIX},https://3001-${BASE44_PUBLIC_HOST_SUFFIX},http://localhost:3000,http://localhost:5174` so the backend's CSRF origin check passes for both frontends.
 
 ## Services (docker-compose.base44.yml)
 
@@ -18,6 +18,7 @@ Both live in the same repo as `frontend/` and `backend/`.
 | db       | postgres:16-alpine | 5432 (internal) | Healthcheck via `pg_isready` |
 | backend  | python:3.11-slim  | 8000 (internal) | `uvicorn --reload`, runs Alembic migrations + seeds on startup |
 | frontend | node:20           | 3000 (public)   | `yarn start` → Vite dev server with HMR |
+| frontend-stok | node:20       | 3001 (public)   | Inventory app for UU05 (`frontend-stok/`), `npm start` → Vite on 5174, proxies `/api` to backend. Versions aligned with main frontend (React 19, router 7, Vite 8) |
 
 ## Required env vars
 

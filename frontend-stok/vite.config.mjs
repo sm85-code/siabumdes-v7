@@ -13,5 +13,12 @@ export default defineConfig({
     host: "0.0.0.0",
     // Port separation from the main frontend (3000) to avoid conflicts.
     port: 5174,
+    allowedHosts: true,
+    proxy: {
+      "/api": {
+        target: "http://backend:8000",
+        changeOrigin: true,
+      },
+    },
   },
 });
