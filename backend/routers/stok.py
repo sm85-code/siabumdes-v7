@@ -185,6 +185,7 @@ async def catat_mutasi(data: dict, _: dict = Depends(require_stok_access)):
 
 @router.post("/masuk/sinkronisasi-mingguan")
 async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
+    expected_transaction_code = "sinkronisasi_stok"
     expected_transaction_name = "2. Pembelian Barang Dagangan (Sinkronisasi Aplikasi)"
     expected_debit = "1.1.05.51"
     expected_credit = "1.1.01.15"
@@ -200,7 +201,7 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             transaction_type = next(
                 (
                     row for row in transaction_types
-                    if str(row.get("code", "")).strip() == "2"
+                    if str(row.get("code", "")).strip() == expected_transaction_code
                     and str(row.get("name", "")).strip() == expected_transaction_name
                     and (
                         str(row.get("group", "")).strip().upper() == UNIT_ID
@@ -210,7 +211,7 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
                 None,
             )
             if not transaction_type:
-                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia atau belum ditautkan ke UU05. Tambahkan kode 2: {expected_transaction_name}")
+                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia atau belum ditautkan ke UU05. Tambahkan kode {expected_transaction_code}: {expected_transaction_name}")
 
             debit_account = await db.accounts.select_one({"code": expected_debit, "group": UNIT_ID}, {"_id": 0})
             if not debit_account or str(debit_account.get("name", "")).strip() != "Persediaan Barang Dagangan":
@@ -225,7 +226,8 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
                 payload={
                     "date": datetime.now(timezone.utc).date().isoformat(),
                     "unit_usaha_id": UNIT_ID,
-                    "transaction_type": expected_transaction_name,
+                    "transaction_type": expected_transaction_code,
+                    "transaction_type_name": expected_transaction_name,
                     "description": expected_transaction_name,
                     "amount": total,
                     "debit_account_code": expected_debit,
