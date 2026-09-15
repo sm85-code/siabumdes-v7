@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+
+const today = () => new Date().toISOString().slice(0, 10);
 import {
   ArrowLeftRight,
   ArrowDownToLine,
@@ -161,7 +163,7 @@ function MutationModal({ type, onClose, onSaved }) {
   const isIn = type === "in";
   const meta = MUTATION_META[type];
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ produk_id: "", jumlah: "", harga_satuan: "", keterangan: "" });
+  const [form, setForm] = useState({ produk_id: "", tanggal: today(), jumlah: "", harga_satuan: "", keterangan: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -186,6 +188,7 @@ function MutationModal({ type, onClose, onSaved }) {
       const payload = {
         jenis: type, // "in" | "out"
         produk_id: form.produk_id,
+        tanggal: form.tanggal,
         jumlah,
         harga_satuan: hargaSatuan,
         total_biaya: totalBiaya,
@@ -220,6 +223,10 @@ function MutationModal({ type, onClose, onSaved }) {
           {error ? (
             <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>
           ) : null}
+
+          <Field label="Tanggal Transaksi" required>
+            <input type="date" value={form.tanggal} onChange={setField("tanggal")} required className="input" />
+          </Field>
 
           <Field label="Produk" required>
             <select value={form.produk_id} onChange={setField("produk_id")} required className="input">
