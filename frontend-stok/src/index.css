@@ -16,6 +16,11 @@ html,body,#root{min-height:100%;margin:0}body{background:var(--bg);color:var(--t
 .content-shell{max-width:1400px;margin:0 auto;padding:2.5rem}.page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1.5rem}.page-title{font-family:'Outfit';font-size:1.75rem;font-weight:700;margin:0}.page-subtitle{margin:.35rem 0 0;color:var(--text-muted);font-size:.9rem}
 @media(max-width:1023px){.content-shell{padding:4.5rem 1rem 1.5rem}.page-title{font-size:1.5rem}}
 @media(max-width:640px){.page-header{flex-direction:column}.content-shell{padding-left:1rem;padding-right:1rem}}
+
+/* Responsive utilities shared by every stock-management view. */
+.page-shell{width:100%;min-width:0}.table-wrap{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:.75rem}.table-wrap table{min-width:720px}.action-group{display:flex;flex-wrap:wrap;gap:.75rem}.action-group>*{min-width:0}.modal-scroll{max-height:calc(100dvh - 2rem);overflow-y:auto}
+@media(max-width:640px){.content-shell{padding-top:4.75rem}.page-header{gap:.9rem}.page-header .action-group{width:100%}.page-header .action-group>*{flex:1 1 100%;width:100%}.table-wrap{margin-inline:-.25rem;width:calc(100% + .5rem)}.table-wrap table{min-width:680px}.modal-scroll{max-height:calc(100dvh - 1rem)}.card{padding:1rem}.stat-grid{grid-template-columns:1fr!important}.action-group{gap:.5rem}}
+@media(min-width:641px) and (max-width:1023px){.content-shell{padding-left:1.25rem;padding-right:1.25rem}.table-wrap table{min-width:720px}}
 @tailwind components;
 @tailwind utilities;
 /* Compatibility aliases for the stock app's existing utility markup. */

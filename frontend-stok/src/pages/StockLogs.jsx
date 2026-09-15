@@ -51,12 +51,12 @@ export default function StockLogs() {
 
   return (
     <section data-testid="stok-logs-page">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <header className="page-header mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Log Mutasi Barang</h1>
           <p className="text-sm text-slate-500">Riwayat stok masuk dan keluar Unit Toko Offline (UU05).</p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="action-group flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => setModalType("in")}
@@ -80,7 +80,7 @@ export default function StockLogs() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="table-wrap rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[760px] text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>

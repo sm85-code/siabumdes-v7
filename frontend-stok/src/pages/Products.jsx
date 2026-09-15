@@ -43,7 +43,7 @@ export default function Products() {
 
   return (
     <section data-testid="stok-products-page">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <header className="page-header mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-slate-900">Master Produk &amp; Harga</h1>
           <p className="text-sm text-slate-500">Daftar barang Unit Toko Offline (UU05) beserta stok dan harga.</p>
@@ -63,7 +63,7 @@ export default function Products() {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      <div className="table-wrap rounded-xl border border-slate-200 bg-white">
         <table className="w-full min-w-[720px] text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
