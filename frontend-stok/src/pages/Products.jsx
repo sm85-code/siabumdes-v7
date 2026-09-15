@@ -43,8 +43,8 @@ export default function Products() {
 
   return (
     <section data-testid="stok-products-page">
-      <header className="page-header mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
+      <header className="page-header mb-6 flex w-full flex-wrap items-start justify-between gap-4 text-left">
+        <div className="min-w-0 text-left">
           <h1 className="text-xl font-semibold text-slate-900">Master Produk &amp; Harga</h1>
           <p className="text-sm text-slate-500">Daftar barang Unit Toko Offline (UU05) beserta stok dan harga.</p>
         </div>
@@ -153,7 +153,7 @@ function ProductModal({ onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4 sm:items-center sm:py-8" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
-      <div className="my-4 w-full max-w-lg rounded-xl bg-white shadow-xl sm:my-0">
+      <div className="modal-scroll my-4 w-full max-w-lg overflow-y-auto rounded-xl bg-white text-left shadow-xl sm:my-0">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 id="product-modal-title" className="text-base font-semibold text-slate-900">Tambah Produk Baru</h2>
           <button type="button" onClick={onClose} className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup">
