@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Package, Plus, X, Loader2 } from "lucide-react";
 import api, { request, getApiError, fmtRp } from "@/lib/api.js";
 
@@ -151,8 +152,8 @@ function ProductModal({ onClose, onSaved }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-slate-900/50 p-3 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
       <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-lg flex-col overflow-hidden rounded-xl bg-white text-left shadow-xl sm:max-h-[calc(100dvh-3rem)]">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <h2 id="product-modal-title" className="text-base font-semibold text-slate-900">Tambah Produk Baru</h2>
@@ -212,6 +213,7 @@ function ProductModal({ onClose, onSaved }) {
         </form>
       </div>
     </div>
+    , document.body
   );
 }
 
