@@ -239,18 +239,22 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not unit_doc or not unit_doc.get("id"):
                 raise HTTPException(status_code=409, detail="Unit UU05 belum terdaftar pada master unit usaha")
 
-            transaction_date = min(item.tanggal for item in items).date().isoformat()
-            await db.transactions.create({
-                "id": str(uuid4()),
-                "date": transaction_date,
-                "unit_usaha_id": unit_doc["id"],
-                "transaction_type": expected_transaction_code,
-                "description": expected_transaction_name,
-                "amount": total,
-                "debit_account_code": expected_debit,
-                "credit_account_code": expected_credit,
-                "reference": "sinkronisasi-stok-mingguan",
-            })
+            created_count = 0
             for item in items:
+                reference = f"sinkronisasi-stok:{item.id}"
+                existing = await db.transactions.select_one({"reference": reference}, {"_id": 0})
+                if not existing:
+                    await db.transactions.create({
+                        "id": str(uuid4()),
+                        "date": item.tanggal.date().isoformat(),
+                        "unit_usaha_id": unit_doc["id"],
+                        "transaction_type": expected_transaction_code,
+                        "description": expected_transaction_name,
+                        "amount": abs(item.total_biaya),
+                        "debit_account_code": expected_debit,
+                        "credit_account_code": expected_credit,
+                        "reference": reference,
+                    })
+                    created_count += 1
                 item.status_keuangan = "terkirim"
-            return {"pesan": "Rekap stok berhasil terbuku di keuangan", "jumlah_item": len(items), "total_biaya": total, "status_keuangan": "terkirim"}
+            return {"pesan": "Stok masuk berhasil terbuku di keuangan", "jumlah_item": len(items), "transaksi_baru": created_count, "total_biaya": total, "status_keuangan": "terkirim"}
