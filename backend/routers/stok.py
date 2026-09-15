@@ -197,8 +197,6 @@ async def catat_mutasi(data: dict, _: dict = Depends(require_stok_access)):
 async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
     expected_transaction_code = "sinkronisasi_stok"
     expected_transaction_name = "2. Pembelian Barang Dagangan (Sinkronisasi Aplikasi)"
-    expected_debit = "1.1.05.51"
-    expected_credit = "1.1.01.15"
 
     async with SessionLocal() as session:
         async with session.begin():
@@ -223,12 +221,19 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not transaction_type:
                 raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia atau belum ditautkan ke UU05. Tambahkan kode {expected_transaction_code}: {expected_transaction_name}")
 
-            debit_account = await db.accounts.select_one({"code": expected_debit, "group": UNIT_ID}, {"_id": 0})
-            if not debit_account or str(debit_account.get("name", "")).strip() != "Persediaan Barang Dagangan":
-                raise HTTPException(status_code=409, detail=f"Akun debit UU05 belum tersedia atau namanya tidak sesuai: {expected_debit} - Persediaan Barang Dagangan")
-            credit_account = await db.accounts.select_one({"code": expected_credit, "group": UNIT_ID}, {"_id": 0})
-            if not credit_account or str(credit_account.get("name", "")).strip() != "Kas/Bank - UU05":
-                raise HTTPException(status_code=409, detail=f"Akun kredit UU05 belum tersedia atau namanya tidak sesuai: {expected_credit} - Kas/Bank - UU05")
+            expected_debit = str(transaction_type.get("debit", "")).strip()
+            expected_credit = str(transaction_type.get("credit", "")).strip()
+            if not expected_debit or not expected_credit:
+                raise HTTPException(status_code=409, detail="Jenis transaksi sinkronisasi_stok belum memiliki akun debit dan kredit")
+
+            accounts = await db.accounts.select({"group": UNIT_ID}, {"_id": 0}).all(1000)
+            account_by_code = {str(row.get("code", "")).strip(): row for row in accounts}
+            debit_account = account_by_code.get(expected_debit)
+            credit_account = account_by_code.get(expected_credit)
+            if not debit_account:
+                raise HTTPException(status_code=409, detail=f"Kode akun debit {expected_debit} dari master UU05 tidak ditemukan")
+            if not credit_account:
+                raise HTTPException(status_code=409, detail=f"Kode akun kredit {expected_credit} dari master UU05 tidak ditemukan")
 
             unit_doc = await db.unit_usaha.select_one({"code": UNIT_ID}, {"_id": 0})
             if not unit_doc or not unit_doc.get("id"):
@@ -239,15 +244,12 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
                 "id": str(uuid4()),
                 "date": transaction_date,
                 "unit_usaha_id": unit_doc["id"],
-                "unit_code": UNIT_ID,
                 "transaction_type": expected_transaction_code,
-                "transaction_type_name": expected_transaction_name,
                 "description": expected_transaction_name,
                 "amount": total,
                 "debit_account_code": expected_debit,
                 "credit_account_code": expected_credit,
                 "reference": "sinkronisasi-stok-mingguan",
-                "created_by": "sistem-stok",
             })
             for item in items:
                 item.status_keuangan = "terkirim"
