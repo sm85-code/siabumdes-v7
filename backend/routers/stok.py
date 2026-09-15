@@ -220,12 +220,17 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not credit_account or str(credit_account.get("name", "")).strip() != "Kas/Bank - UU05":
                 raise HTTPException(status_code=409, detail=f"Akun kredit UU05 belum tersedia atau namanya tidak sesuai: {expected_credit} - Kas/Bank - UU05")
 
+            unit_doc = await db.unit_usaha.select_one({"code": UNIT_ID}, {"_id": 0})
+            if not unit_doc or not unit_doc.get("id"):
+                raise HTTPException(status_code=409, detail="Unit UU05 belum terdaftar pada master unit usaha")
+
             ledger = StoredEntity(
                 namespace="transactions",
                 id=str(uuid4()),
                 payload={
                     "date": datetime.now(timezone.utc).date().isoformat(),
-                    "unit_usaha_id": UNIT_ID,
+                    "unit_usaha_id": unit_doc["id"],
+                    "unit_code": UNIT_ID,
                     "transaction_type": expected_transaction_code,
                     "transaction_type_name": expected_transaction_name,
                     "description": expected_transaction_name,
