@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from database import SessionLocal, StoredEntity
+from database import SessionLocal, StoredEntity, db
 from models import Produk, StokKeluar, StokMasuk
 from services.jwt_service import get_current_user_payload
 from dependencies import user_from_payload
@@ -26,11 +26,21 @@ ALLOWED_ROLES = {"admin", "direktur", "bendahara"}
 
 
 async def require_stok_access(payload: dict = Depends(get_current_user_payload)) -> dict:
-    """Require an active session and restrict pengelola to unit UU05."""
+    """Require an active session and restrict pengelola to the UU05 unit.
+
+    Existing users may store either the unit code (UU05) or the generated
+    document id in ``unit_usaha_id``. Resolve both representations against
+    the canonical unit collection instead of weakening access to any unit.
+    """
     user = await user_from_payload(payload)
-    if user.role not in ALLOWED_ROLES and not (
-        user.role == "pengelola" and user.unit_usaha_id == UNIT_ID
-    ):
+    has_uu05_access = False
+    if user.role == "pengelola" and user.unit_usaha_id:
+        assigned_unit = str(user.unit_usaha_id).upper()
+        has_uu05_access = assigned_unit == UNIT_ID
+        if not has_uu05_access:
+            unit = await db.unit_usaha.select_one({"id": user.unit_usaha_id}, {"_id": 0})
+            has_uu05_access = bool(unit and str(unit.get("code", "")).upper() == UNIT_ID)
+    if user.role not in ALLOWED_ROLES and not has_uu05_access:
         raise HTTPException(status_code=403, detail="Anda tidak memiliki akses ke modul stok UU05")
     if user.must_change_password:
         raise HTTPException(status_code=403, detail="PASSWORD_CHANGE_REQUIRED")

@@ -15,7 +15,9 @@ const NAV = [
 function hasUnitAccess(user) {
   if (!user) return false;
   if (GLOBAL_ROLES.includes(user.role)) return true;
-  return user.role === "pengelola" && String(user.unit_usaha_id ?? user.unit ?? "").toUpperCase() === UNIT_TOKO;
+  // The backend remains the authority. Pengelola users may receive either
+  // the UU05 code or the database id for their assigned unit.
+  return user.role === "pengelola" && Boolean(user.unit_usaha_id ?? user.unit);
 }
 
 function AccessDenied({ user, onLogout }) {
