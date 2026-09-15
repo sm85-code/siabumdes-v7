@@ -196,21 +196,19 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not items:
                 return {"pesan": "Tidak ada stok masuk yang perlu disinkronkan", "jumlah_item": 0, "total_biaya": 0}
 
-            master_rows = (await session.execute(
-                select(StoredEntity).where(StoredEntity.namespace.in_(["master_data", "master_data_transaction_types", "master_data_accounts"]))
-            )).scalars().all()
-            transaction_exists = any(
-                str(row.payload.get("name", row.payload.get("nama", ""))).strip() == expected_transaction_name
-                or str(row.payload.get("code", row.payload.get("kode", ""))).strip() == "2"
-                for row in master_rows
-            )
-            if not transaction_exists:
-                raise HTTPException(status_code=409, detail=f"Jenis transaksi wajib belum tersedia: {expected_transaction_name}")
+            transaction_type = await db.transaction_types.select_one({"code": "2", "group": UNIT_ID}, {"_id": 0})
+            if not transaction_type:
+                transaction_type = await db.transaction_types.select_one({"name": expected_transaction_name, "group": UNIT_ID}, {"_id": 0})
+            if not transaction_type:
+                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia. Tambahkan: {expected_transaction_name}")
+            if str(transaction_type.get("name", "")).strip() != expected_transaction_name:
+                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 dengan kode 2 tidak sesuai. Nama wajib: {expected_transaction_name}")
 
-            account_names = {str(row.payload.get("code", row.payload.get("kode", ""))).strip(): str(row.payload.get("name", row.payload.get("nama", ""))).strip() for row in master_rows}
-            if account_names.get(expected_debit) != "Persediaan Barang Dagangan":
+            debit_account = await db.accounts.select_one({"code": expected_debit, "group": UNIT_ID}, {"_id": 0})
+            if not debit_account or str(debit_account.get("name", "")).strip() != "Persediaan Barang Dagangan":
                 raise HTTPException(status_code=409, detail=f"Akun debit UU05 belum tersedia atau namanya tidak sesuai: {expected_debit} - Persediaan Barang Dagangan")
-            if account_names.get(expected_credit) != "Kas/Bank - UU05":
+            credit_account = await db.accounts.select_one({"code": expected_credit, "group": UNIT_ID}, {"_id": 0})
+            if not credit_account or str(credit_account.get("name", "")).strip() != "Kas/Bank - UU05":
                 raise HTTPException(status_code=409, detail=f"Akun kredit UU05 belum tersedia atau namanya tidak sesuai: {expected_credit} - Kas/Bank - UU05")
 
             ledger = StoredEntity(
