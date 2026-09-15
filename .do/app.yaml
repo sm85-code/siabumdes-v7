@@ -17,13 +17,13 @@ services:
     source_dir: /backend
     github:
       repo: sm85-code/siabumdes-v7
-      branch: main
+      branch: grok-fastapi
       deploy_on_push: true
     environment_slug: python
     instance_count: 1
     instance_size_slug: basic-xxs
     http_port: 8000
-    run_command: uvicorn server:app --host 0.0.0.0 --port ${PORT}
+    run_command: uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
     routes:
       - path: /api
         preserve_path_prefix: true
@@ -44,13 +44,16 @@ services:
       - key: CORS_ORIGINS
         scope: RUN_TIME
         value: ${frontend.PUBLIC_URL},https://starfish-app-9qi6i.ondigitalocean.app
+      - key: PYTHONPATH
+        scope: RUN_TIME
+        value: /workspace/backend
 
 static_sites:
   - name: frontend
     source_dir: /frontend
     github:
       repo: sm85-code/siabumdes-v7
-      branch: main
+      branch: grok-fastapi
       deploy_on_push: true
     environment_slug: node-js
     build_command: yarn install --frozen-lockfile && yarn build
