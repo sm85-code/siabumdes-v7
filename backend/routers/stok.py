@@ -6,7 +6,7 @@ seperti koleksi transactions lama, sehingga tidak mengubah tabel keuangan inti.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
 from typing import Literal
 from uuid import uuid4
 
@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
-from database import SessionLocal, StoredEntity, db
+from database import SessionLocal, db
 from models import Produk, StokKeluar, StokMasuk
 from services.jwt_service import get_current_user_payload
 from dependencies import user_from_payload
@@ -58,12 +58,14 @@ class ProdukInput(BaseModel):
 
 class StokMasukInput(BaseModel):
     produk_id: int = Field(gt=0)
+    tanggal: date = Field(default_factory=date.today)
     jumlah: int = Field(gt=0)
     harga_beli_satuan: int = Field(ge=0)
 
 
 class StokKeluarInput(BaseModel):
     produk_id: int = Field(gt=0)
+    tanggal: date = Field(default_factory=date.today)
     jumlah: int = Field(gt=0)
     tipe_keluar: Literal["penjualan", "rusak", "kadaluarsa"]
     keterangan: str | None = Field(default=None, max_length=500)
@@ -112,6 +114,7 @@ async def catat_stok_masuk(data: StokMasukInput, _: dict = Depends(require_stok_
                 raise HTTPException(status_code=404, detail="Produk UU05 tidak ditemukan")
             total = data.jumlah * data.harga_beli_satuan
             item = StokMasuk(
+                tanggal=datetime.combine(data.tanggal, time.min, tzinfo=timezone.utc),
                 produk_id=product.id,
                 jumlah=data.jumlah,
                 harga_beli_satuan=data.harga_beli_satuan,
@@ -134,7 +137,14 @@ async def catat_stok_keluar(data: StokKeluarInput, _: dict = Depends(require_sto
                 raise HTTPException(status_code=404, detail="Produk UU05 tidak ditemukan")
             if product.stok_saat_ini < data.jumlah:
                 raise HTTPException(status_code=422, detail="Stok tidak mencukupi")
-            item = StokKeluar(produk_id=product.id, unit_id=UNIT_ID, **data.model_dump())
+            item = StokKeluar(
+                tanggal=datetime.combine(data.tanggal, time.min, tzinfo=timezone.utc),
+                produk_id=product.id,
+                unit_id=UNIT_ID,
+                jumlah=data.jumlah,
+                tipe_keluar=data.tipe_keluar,
+                keterangan=data.keterangan,
+            )
             product.stok_saat_ini -= data.jumlah
             session.add(item)
         await session.refresh(item)
@@ -177,9 +187,9 @@ async def ringkasan_mingguan(_: dict = Depends(require_stok_access)):
 async def catat_mutasi(data: dict, _: dict = Depends(require_stok_access)):
     jenis = data.get("jenis")
     if jenis == "in":
-        return await catat_stok_masuk(StokMasukInput(produk_id=int(data["produk_id"]), jumlah=int(data["jumlah"]), harga_beli_satuan=int(data.get("harga_satuan", 0))))
+        return await catat_stok_masuk(StokMasukInput(produk_id=int(data["produk_id"]), tanggal=date.fromisoformat(data["tanggal"]) if data.get("tanggal") else date.today(), jumlah=int(data["jumlah"]), harga_beli_satuan=int(data.get("harga_satuan", 0))))
     if jenis == "out":
-        return await catat_stok_keluar(StokKeluarInput(produk_id=int(data["produk_id"]), jumlah=int(data["jumlah"]), tipe_keluar="penjualan", keterangan=data.get("keterangan")))
+        return await catat_stok_keluar(StokKeluarInput(produk_id=int(data["produk_id"]), tanggal=date.fromisoformat(data["tanggal"]) if data.get("tanggal") else date.today(), jumlah=int(data["jumlah"]), tipe_keluar="penjualan", keterangan=data.get("keterangan")))
     raise HTTPException(status_code=422, detail="Jenis mutasi harus in atau out")
 
 
@@ -224,26 +234,21 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not unit_doc or not unit_doc.get("id"):
                 raise HTTPException(status_code=409, detail="Unit UU05 belum terdaftar pada master unit usaha")
 
-            ledger = StoredEntity(
-                namespace="transactions",
-                id=str(uuid4()),
-                payload={
-                    "date": datetime.now(timezone.utc).date().isoformat(),
-                    "unit_usaha_id": unit_doc["id"],
-                    "unit_code": UNIT_ID,
-                    "transaction_type": expected_transaction_code,
-                    "transaction_type_name": expected_transaction_name,
-                    "description": expected_transaction_name,
-                    "amount": total,
-                    "debit_account_code": expected_debit,
-                    "debit_account_name": "Persediaan Barang Dagangan",
-                    "credit_account_code": expected_credit,
-                    "credit_account_name": "Kas/Bank - UU05",
-                    "reference": "sinkronisasi-stok-mingguan",
-                    "created_by": "sistem-stok",
-                },
-            )
-            session.add(ledger)
+            transaction_date = min(item.tanggal for item in items).date().isoformat()
+            await db.transactions.create({
+                "id": str(uuid4()),
+                "date": transaction_date,
+                "unit_usaha_id": unit_doc["id"],
+                "unit_code": UNIT_ID,
+                "transaction_type": expected_transaction_code,
+                "transaction_type_name": expected_transaction_name,
+                "description": expected_transaction_name,
+                "amount": total,
+                "debit_account_code": expected_debit,
+                "credit_account_code": expected_credit,
+                "reference": "sinkronisasi-stok-mingguan",
+                "created_by": "sistem-stok",
+            })
             for item in items:
                 item.status_keuangan = "terkirim"
             return {"pesan": "Rekap stok berhasil terbuku di keuangan", "jumlah_item": len(items), "total_biaya": total, "status_keuangan": "terkirim"}
