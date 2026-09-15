@@ -196,13 +196,21 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
             if not items:
                 return {"pesan": "Tidak ada stok masuk yang perlu disinkronkan", "jumlah_item": 0, "total_biaya": 0}
 
-            transaction_type = await db.transaction_types.select_one({"code": "2", "group": UNIT_ID}, {"_id": 0})
+            transaction_types = await db.transaction_types.select({}, {"_id": 0}).all(1000)
+            transaction_type = next(
+                (
+                    row for row in transaction_types
+                    if str(row.get("code", "")).strip() == "2"
+                    and str(row.get("name", "")).strip() == expected_transaction_name
+                    and (
+                        str(row.get("group", "")).strip().upper() == UNIT_ID
+                        or UNIT_ID in {str(code).strip().upper() for code in (row.get("unit_codes") or [])}
+                    )
+                ),
+                None,
+            )
             if not transaction_type:
-                transaction_type = await db.transaction_types.select_one({"name": expected_transaction_name, "group": UNIT_ID}, {"_id": 0})
-            if not transaction_type:
-                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia. Tambahkan: {expected_transaction_name}")
-            if str(transaction_type.get("name", "")).strip() != expected_transaction_name:
-                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 dengan kode 2 tidak sesuai. Nama wajib: {expected_transaction_name}")
+                raise HTTPException(status_code=409, detail=f"Jenis transaksi UU05 wajib belum tersedia atau belum ditautkan ke UU05. Tambahkan kode 2: {expected_transaction_name}")
 
             debit_account = await db.accounts.select_one({"code": expected_debit, "group": UNIT_ID}, {"_id": 0})
             if not debit_account or str(debit_account.get("name", "")).strip() != "Persediaan Barang Dagangan":
