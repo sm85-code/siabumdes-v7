@@ -182,6 +182,7 @@ async def bulk_delete_transactions(ids: List[str], dep: dict = Depends(require_r
     txs = await db.transactions.select({"id": {"$in": ids}}, {"_id": 0, "date": 1, "id": 1}).all(20000)
     for t in txs:
         await _check_period_not_blocked(dep, t.get("date", ""))
+        await db.stock_logs.modify_many({"transaction_id": tx_id}, {"set": {"transaction_id": None, "is_synced": True}})
     r = await db.transactions.remove_many({"id": {"$in": ids}})
     return {"deleted": r.deleted_count}
 
@@ -190,5 +191,6 @@ async def delete_transaction(tx_id: str, dep: dict = Depends(require_roles("admi
     existing = await db.transactions.select_one({"id": tx_id}, {"_id": 0, "date": 1})
     if existing:
         await _check_period_not_blocked(dep, existing.get("date", ""))
+        await db.stock_logs.modify_many({"transaction_id": tx_id}, {"set": {"transaction_id": None, "is_synced": True}})
     r = await db.transactions.remove_one({"id": tx_id})
     return {"deleted": r.deleted_count}
