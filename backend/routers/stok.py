@@ -258,3 +258,33 @@ async def sinkronisasi_mingguan(_: dict = Depends(require_stok_access)):
                     created_count += 1
                 item.status_keuangan = "terkirim"
             return {"pesan": "Stok masuk berhasil terbuku di keuangan", "jumlah_item": len(items), "transaksi_baru": created_count, "total_biaya": total, "status_keuangan": "terkirim"}
+
+@router.delete("/masuk/{stok_id}", status_code=status.HTTP_200_OK)
+async def batalkan_stok_masuk(stok_id: int, _: dict = Depends(require_stok_access)):
+    async with SessionLocal() as session:
+        async with session.begin():
+            # 1. Cari data StokMasuk
+            stok_item = await session.scalar(
+                select(StokMasuk).where(StokMasuk.id == stok_id, StokMasuk.unit_id == UNIT_ID).with_for_update()
+            )
+            if not stok_item:
+                raise HTTPException(status_code=404, detail="Data stok masuk tidak ditemukan")
+            
+            if stok_item.status_keuangan == "dibatalkan":
+                raise HTTPException(status_code=400, detail="Stok ini sudah dalam status dibatalkan")
+
+            # 2. Kurangi kembali stok fisik produk
+            product = await session.scalar(
+                select(Produk).where(Produk.id == stok_item.produk_id, Produk.unit_id == UNIT_ID).with_for_update()
+            )
+            if product:
+                product.stok_saat_ini = max(0, product.stok_saat_ini - stok_item.jumlah)
+
+            # 3. Ubah status menjadi dibatalkan
+            stok_item.status_keuangan = "dibatalkan"
+
+            # 4. Hapus transaksi terkait di keuangan (jika sudah terlanjur disinkronkan)
+            reference = f"sinkronisasi-stok:{stok_id}"
+            await db.transactions.remove_many({"reference": reference})
+
+        return {"pesan": "Stok masuk berhasil dibatalkan dan transaksi keuangan terkait telah dihapus"}
