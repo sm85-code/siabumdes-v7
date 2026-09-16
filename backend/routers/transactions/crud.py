@@ -178,19 +178,47 @@ async def update_transaction(tx_id: str, payload: TransactionCreate, dep: dict =
 async def bulk_delete_transactions(ids: List[str], dep: dict = Depends(require_roles(*WRITE_LEVEL))):
     if not ids:
         return {"deleted": 0}
-    # Enforce blocked periods per transaction
-    txs = await db.transactions.select({"id": {"$in": ids}}, {"_id": 0, "date": 1, "id": 1}).all(20000)
+    txs = await db.transactions.select({"id": {"$in": ids}}, {"_id": 0, "date": 1, "id": 1, "reference": 1}).all(20000)
     for t in txs:
         await _check_period_not_blocked(dep, t.get("date", ""))
-        await db.stock_logs.modify_many({"transaction_id": tx_id}, {"set": {"transaction_id": None, "is_synced": True}})
+        ref = t.get("reference", "")
+        if ref and ref.startswith("sinkronisasi-stok:"):
+            stok_id_str = ref.split(":")[-1]
+            if stok_id_str.isdigit():
+                try:
+                    from database import SessionLocal
+                    from models import StokMasuk
+                    async with SessionLocal() as session:
+                        async with session.begin():
+                            stok_item = await session.get(StokMasuk, int(stok_id_str))
+                            if stok_item:
+                                stok_item.status_keuangan = "dibatalkan"
+                except Exception as e:
+                    logging.error(f"Gagal membatalkan status StokMasuk: {e}")
+
     r = await db.transactions.remove_many({"id": {"$in": ids}})
     return {"deleted": r.deleted_count}
 
 @router.delete("/transactions/{tx_id}")
 async def delete_transaction(tx_id: str, dep: dict = Depends(require_roles("admin", "direktur", "bendahara"))):
-    existing = await db.transactions.select_one({"id": tx_id}, {"_id": 0, "date": 1})
+    existing = await db.transactions.select_one({"id": tx_id}, {"_id": 0, "date": 1, "reference": 1})
     if existing:
         await _check_period_not_blocked(dep, existing.get("date", ""))
-        await db.stock_logs.modify_many({"transaction_id": tx_id}, {"set": {"transaction_id": None, "is_synced": True}})
+        # Tandai StokMasuk di PostgreSQL sebagai 'dibatalkan' agar tidak disinkronkan ulang
+        ref = existing.get("reference", "")
+        if ref and ref.startswith("sinkronisasi-stok:"):
+            stok_id_str = ref.split(":")[-1]
+            if stok_id_str.isdigit():
+                try:
+                    from database import SessionLocal
+                    from models import StokMasuk
+                    async with SessionLocal() as session:
+                        async with session.begin():
+                            stok_item = await session.get(StokMasuk, int(stok_id_str))
+                            if stok_item:
+                                stok_item.status_keuangan = "dibatalkan"
+                except Exception as e:
+                    logging.error(f"Gagal membatalkan status StokMasuk: {e}")
+
     r = await db.transactions.remove_one({"id": tx_id})
     return {"deleted": r.deleted_count}
