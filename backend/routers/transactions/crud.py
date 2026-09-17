@@ -1,4 +1,6 @@
 """Modular routes: crud"""
+from typing import List, Optional
+
 from router_dependencies import (
     ACCESS_TOKEN_EXPIRE_HOURS,
     ADMIN_LEVEL,
@@ -175,7 +177,7 @@ async def update_transaction(tx_id: str, payload: TransactionCreate, dep: dict =
     return await db.transactions.select_one({"id": tx_id}, {"_id": 0})
 
 
-async def _cancel_stok_from_references(references: list) -> None:
+async def _cancel_stok_from_references(references: List[str]) -> None:
     """Dual-way cleanup: batalkan StokMasuk terkait reference sinkronisasi-stok:* di PostgreSQL.
 
     - Set status_keuangan = 'dibatalkan' agar sinkronisasi-mingguan tidak meregenerasi jurnal.
