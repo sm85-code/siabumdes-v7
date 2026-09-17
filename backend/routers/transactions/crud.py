@@ -193,7 +193,8 @@ async def _cancel_stok_from_references(references: list) -> None:
         return
 
     from database import SessionLocal
-    from models.inventory import StokMasuk, Produk
+    # Samakan dengan routers/stok.py — di-export package models/__init__.py
+    from models import StokMasuk, Produk
 
     try:
         async with SessionLocal() as session:

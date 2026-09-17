@@ -3,4 +3,5 @@ from models.base import *
 from models.auth import *
 from models.master_data import *
 from models.transactions import *
-from models.inventory import Produk, StokKeluar, StokMasuk  # noqa: F401 — dual-way stock sync
+# Inventory (Produk, StokMasuk, StokKeluar) di-export oleh package models/__init__.py
+# via relative import — jangan import models.inventory di sini (bentrok models.py vs models/).
