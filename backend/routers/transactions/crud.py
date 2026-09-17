@@ -1,4 +1,6 @@
 """Modular routes: crud"""
+from typing import List, Optional
+
 from router_dependencies import (
     ACCESS_TOKEN_EXPIRE_HOURS,
     ADMIN_LEVEL,
@@ -174,74 +176,83 @@ async def update_transaction(tx_id: str, payload: TransactionCreate, dep: dict =
     await db.transactions.modify_one({"id": tx_id}, {"set": payload_data})
     return await db.transactions.select_one({"id": tx_id}, {"_id": 0})
 
+
+async def _cancel_stok_from_references(references: List[str]) -> None:
+    """Dual-way cleanup: batalkan StokMasuk terkait reference sinkronisasi-stok:* di PostgreSQL.
+
+    - Set status_keuangan = 'dibatalkan' agar sinkronisasi-mingguan tidak meregenerasi jurnal.
+    - Kembalikan stok fisik (stok_saat_ini -= jumlah).
+    Gagal → raise HTTPException agar penghapusan keuangan tidak meninggalkan inkonsistensi.
+    """
+    stok_ids = []
+    for ref in references:
+        if not ref or not str(ref).startswith("sinkronisasi-stok:"):
+            continue
+        stok_id_str = str(ref).split(":")[-1].strip()
+        if stok_id_str.isdigit():
+            stok_ids.append(int(stok_id_str))
+    if not stok_ids:
+        return
+
+    from database import SessionLocal
+    # Import langsung dari sumber (bukan facade models.py) — hindari circular dependency
+    from models.inventory import StokMasuk, Produk
+
+    try:
+        async with SessionLocal() as session:
+            async with session.begin():
+                for s_id in stok_ids:
+                    stok_item = await session.get(StokMasuk, s_id)
+                    if not stok_item or stok_item.status_keuangan == "dibatalkan":
+                        continue
+                    stok_item.status_keuangan = "dibatalkan"
+                    product = await session.get(Produk, stok_item.produk_id)
+                    if product:
+                        product.stok_saat_ini = max(
+                            0, int(product.stok_saat_ini or 0) - int(stok_item.jumlah or 0)
+                        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.exception("Gagal dual-way cancel stok dari reference sinkronisasi: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Gagal membatalkan status stok terkait (dual-way cleanup). "
+                f"Transaksi keuangan tidak dihapus. Detail: {e}"
+            ),
+        )
+
+
 @router.delete("/transactions/bulk")
 async def bulk_delete_transactions(ids: List[str], dep: dict = Depends(require_roles(*WRITE_LEVEL))):
     if not ids:
         return {"deleted": 0}
-    
-    # 1. Ambil data transaksi beserta tanggal dan reference
-    txs = await db.transactions.select({"id": {"$in": ids}}, {"_id": 0, "date": 1, "id": 1, "reference": 1}).all(20000)
-    
-    # 2. Kumpulkan ID stok yang terkait transaksi sinkronisasi
-    stok_ids_to_cancel = []
+
+    # Ambil dokumen penuh agar field reference selalu ada (hindari projection hilang)
+    txs = await db.transactions.select({"id": {"$in": ids}}, None).all(20000)
+
     for t in txs:
         await _check_period_not_blocked(dep, t.get("date", ""))
-        ref = t.get("reference", "")
-        if ref and ref.startswith("sinkronisasi-stok:"):
-            stok_id_str = ref.split(":")[-1]
-            if stok_id_str.isdigit():
-                stok_ids_to_cancel.append(int(stok_id_str))
 
-    # 3. Kembalikan stok fisik & ubah status di PostgreSQL secara massal
-    if stok_ids_to_cancel:
-        try:
-            from database import SessionLocal
-            from models import StokMasuk, Produk
-            async with SessionLocal() as session:
-                async with session.begin():
-                    for s_id in stok_ids_to_cancel:
-                        stok_item = await session.get(StokMasuk, s_id)
-                        if stok_item and stok_item.status_keuangan != "dibatalkan":
-                            stok_item.status_keuangan = "dibatalkan"
-                            product = await session.get(Produk, stok_item.produk_id)
-                            if product:
-                                product.stok_saat_ini = max(0, product.stok_saat_ini - stok_item.jumlah)
-        except Exception as e:
-            logging.error(f"Gagal membatalkan status & mengembalikan stok massal: {e}")
+    refs = [str(t.get("reference") or "") for t in txs]
+    await _cancel_stok_from_references(refs)
 
-    # 4. Hapus transaksi massal dari database keuangan
     r = await db.transactions.remove_many({"id": {"$in": ids}})
     return {"deleted": r.deleted_count}
 
+
 @router.delete("/transactions/{tx_id}")
 async def delete_transaction(tx_id: str, dep: dict = Depends(require_roles("admin", "direktur", "bendahara"))):
-    # 1. Ambil data transaksi beserta kolom reference (wajib sertakan reference: 1)
-    existing = await db.transactions.select_one({"id": tx_id}, {"_id": 0, "date": 1, "reference": 1})
-    if existing:
-        await _check_period_not_blocked(dep, existing.get("date", ""))
-        ref = existing.get("reference", "")
+    # Ambil dokumen penuh (tanpa projection sempit) agar reference selalu terbaca
+    existing = await db.transactions.select_one({"id": tx_id}, None)
+    if not existing:
+        return {"deleted": 0}
 
-        # 2. Jika transaksi ini berasal dari Sinkronisasi Stok
-        if ref and ref.startswith("sinkronisasi-stok:"):
-            stok_id_str = ref.split(":")[-1]
-            if stok_id_str.isdigit():
-                try:
-                    from database import SessionLocal
-                    from models import StokMasuk, Produk
-                    async with SessionLocal() as session:
-                        async with session.begin():
-                            stok_item = await session.get(StokMasuk, int(stok_id_str))
-                            if stok_item and stok_item.status_keuangan != "dibatalkan":
-                                # Ubah status transaksi stok di PostgreSQL
-                                stok_item.status_keuangan = "dibatalkan"
-                                
-                                # Kembalikan / Kurangi stok fisik di toko
-                                product = await session.get(Produk, stok_item.produk_id)
-                                if product:
-                                    product.stok_saat_ini = max(0, product.stok_saat_ini - stok_item.jumlah)
-                except Exception as e:
-                    logging.error(f"Gagal membatalkan status & mengembalikan stok: {e}")
+    await _check_period_not_blocked(dep, existing.get("date", ""))
 
-    # 3. Hapus transaksi dari database keuangan
+    ref = existing.get("reference") or ""
+    await _cancel_stok_from_references([str(ref)])
+
     r = await db.transactions.remove_one({"id": tx_id})
     return {"deleted": r.deleted_count}
